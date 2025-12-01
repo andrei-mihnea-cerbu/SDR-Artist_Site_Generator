@@ -1,32 +1,45 @@
 import express, { Request, Response } from 'express';
 import * as paypal from '@paypal/checkout-server-sdk';
 import { Config } from '../utils/config';
-import { EmailService } from '../utils/email-service';
 import { LocalDatabase } from '../utils/local-database';
+import { HttpClient } from '../utils/http-client';
 
 const router = express.Router();
 
 const config = new Config();
+
+// PayPal client
 const paypalEnvironment = new paypal.core.LiveEnvironment(
   config.get('PAYPAL_CLIENT_ID'),
   config.get('PAYPAL_SECRET')
 );
 const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment);
+
+// Database
 const db = LocalDatabase.getInstance();
 
+// HTTP client for calling the NestJS email system
+const httpClient = new HttpClient(config.get('API_URL'), {
+  'Content-Type': 'application/json',
+  'X-AUTH-KEY': config.get('TRUSTED_CLIENT_AUTH_TOKEN'),
+});
+
+// ------------------------------------------------------
+// CREATE DONATION ORDER
+// ------------------------------------------------------
 router.post('/donate/create', async (req: Request, res: Response) => {
   const { amount, artistName, currency } = req.body;
   const host = `https://${req.get('host')}`;
 
   if (!amount || !artistName) {
-    res.status(400).json({ error: 'Amount and artistName are required.' });
-    return;
+    return res
+      .status(400)
+      .json({ error: 'Amount and artistName are required.' });
   }
 
   const numericAmount = parseFloat(amount);
   if (isNaN(numericAmount) || numericAmount <= 0) {
-    res.status(400).json({ error: 'Invalid donation amount' });
-    return;
+    return res.status(400).json({ error: 'Invalid donation amount' });
   }
 
   const artistSlug = artistName.toLowerCase().replace(/\s+/g, '-');
@@ -79,15 +92,18 @@ router.post('/donate/create', async (req: Request, res: Response) => {
 
   try {
     const order = await paypalClient.execute(request);
-    res.status(200).json(order.result);
+    return res.status(200).json(order.result);
   } catch (err) {
     console.error('Error creating PayPal donation order:', err);
-    res.status(500).json({ error: 'Failed to create donation order.' });
+    return res.status(500).json({ error: 'Failed to create donation order.' });
   }
 });
 
+// ------------------------------------------------------
+// CAPTURE DONATION + SEND EMAIL
+// ------------------------------------------------------
 router.post('/donate/capture', async (req: Request, res: Response) => {
-  const { orderId, message } = req.body; // ✅ message included
+  const { orderId, message } = req.body;
 
   let host = req.get('host') || '';
   host = host
@@ -97,8 +113,7 @@ router.post('/donate/capture', async (req: Request, res: Response) => {
     .toLowerCase();
 
   if (!orderId) {
-    res.status(400).json({ error: 'Missing orderId' });
-    return;
+    return res.status(400).json({ error: 'Missing orderId' });
   }
 
   try {
@@ -115,6 +130,9 @@ router.post('/donate/capture', async (req: Request, res: Response) => {
     const amount = parseFloat(capture?.amount?.value || '0');
     const currency = capture?.amount?.currency_code || 'USD';
 
+    // ----------------------------------------
+    // Lookup artist based on website hostname
+    // ----------------------------------------
     try {
       const artist = db.getArtistByWebsite(host);
 
@@ -122,25 +140,43 @@ router.post('/donate/capture', async (req: Request, res: Response) => {
         throw new Error(`No artist found for website: ${host}`);
       }
 
-      const emailService = new EmailService();
-
-      await emailService.notifyDonation(
-        artist,
+      // Build donation payload
+      const payload: any = {
+        artist: artist.name,
+        artistEmail: artist.webmail.email,
         donorName,
         donorEmail,
         amount,
         currency,
-        message
+      };
+
+      // Add message only when non-empty
+      if (message && message.trim() !== '') {
+        payload.message = message.trim();
+      }
+
+      // ----------------------------------------
+      // Send donation notification through NestJS email API
+      // ----------------------------------------
+      const emailResponse = await httpClient.post(
+        '/emails/donation-notification',
+        payload
       );
+
+      if (emailResponse.status >= 300) {
+        console.error('[Donate] Email API error:', emailResponse.body);
+      }
     } catch (err) {
-      console.error('[Donate] Failed to send donation info email:', err);
-    } finally {
-      res.json(result);
-      return;
+      console.error(
+        '[Donate] Failed to send donation notification email:',
+        err
+      );
     }
+
+    return res.json(result);
   } catch (err) {
     console.error('Capture failed:', err);
-    res.status(500).json({ error: 'Capture failed' });
+    return res.status(500).json({ error: 'Capture failed' });
   }
 });
 

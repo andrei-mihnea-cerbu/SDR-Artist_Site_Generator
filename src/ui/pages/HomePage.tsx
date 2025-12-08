@@ -16,14 +16,14 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import * as simpleIcons from 'simple-icons';
 
 import { Artist } from '../interfaces/artist';
-import { Social, SocialLabel } from '../interfaces/social';
+import { Social } from '../interfaces/social';
 import { InfoResponse } from '../interfaces/info';
 
 import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
 import { ColorEngineInstance } from '../utils/color_engine';
 
 // -------------------------------------------------
-// UTILITIES
+// ICON UTILS
 // -------------------------------------------------
 
 const createSimpleIcon = (icon: any) => {
@@ -78,85 +78,47 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   const [artist, setArtist] = useState<Artist | null>(null);
-  const [banner, setBanner] = useState<string | null>(null);
-  const [groups, setGroups] = useState<Record<string, Social[]>>({});
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [socials, setSocials] = useState<Social[]>([]);
 
-  // Theme (solid panel + solid buttons)
+  // Palette
   const [panelColor, setPanelColor] = useState('#fff');
-  const [textColor, setTextColor] = useState('#000');
-  const [bgTextColor, setBgTextColor] = useState('#fff');
+  const [textColor, setTextColor] = useState('#000'); // panel text
+  const [bgTextColor, setBgTextColor] = useState('#fff'); // gradient text
 
   const [buttonColor, setButtonColor] = useState('#333');
   const [buttonTextColor, setButtonTextColor] = useState('#fff');
 
-  const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // -------------------------------------------------
-  // LOAD + APPLY COLOR PALETTE
+  // LOAD DATA + APPLY COLOR PALETTE
   // -------------------------------------------------
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [infoRes, labelsRes] = await Promise.all([
-          axios.get<InfoResponse>(`/info`),
-          axios.get<SocialLabel[]>(`${apiUrl}/socials/labels`),
-        ]);
+        const { data } = await axios.get<InfoResponse>(`/info`);
 
-        const { artist, description, socials } = infoRes.data;
-        const labels = labelsRes.data;
+        setArtist(data.artist);
+        setSocials(data.socials); // ⬅ NO GROUPING — exactly as requested
 
-        setArtist(artist);
-
-        if (description.imageGallery.length > 0) {
-          const rel = encodeURI(description.imageGallery[0]);
+        if (data.description.imageGallery.length > 0) {
+          const rel = encodeURI(data.description.imageGallery[0]);
           const full = `${bucket}/${rel}`;
-          setBanner(full);
+          setPhotoUrl(full);
 
           const palette = await ColorEngineInstance.extractPalette(full);
 
           if (palette) {
-            const {
-              oppositeSolid,
-              solidTextColor,
-              textColor: gradientTextColor,
-              buttonSolid,
-              buttonTextColor,
-            } = palette;
+            setPanelColor(palette.oppositeSolid);
+            setTextColor(palette.solidTextColor);
+            setBgTextColor(palette.textColor);
 
-            // Panel
-            setPanelColor(oppositeSolid);
-            setTextColor(solidTextColor);
-
-            // Gradient wrapper text
-            setBgTextColor(gradientTextColor);
-
-            // Buttons (solid)
-            setButtonColor(buttonSolid);
-            setButtonTextColor(buttonTextColor);
+            setButtonColor(palette.buttonSolid);
+            setButtonTextColor(palette.buttonTextColor);
           }
         }
-
-        // Map label names
-        const labelMap: Record<string, string> = {};
-        labels.forEach((l) => (labelMap[l.id] = l.name));
-
-        // Group socials
-        const grouped: Record<string, Social[]> = {};
-
-        socials.forEach((s) => {
-          if (!s.socialLabelsList.length) {
-            (grouped['Other'] ||= []).push(s);
-          } else {
-            s.socialLabelsList.forEach((id) => {
-              const group = labelMap[id] || 'Other';
-              (grouped[group] ||= []).push(s);
-            });
-          }
-        });
-
-        setGroups(grouped);
       } catch (err) {
         console.error('Error loading info:', err);
       } finally {
@@ -168,7 +130,7 @@ export default function HomePage() {
   }, []);
 
   // -------------------------------------------------
-  // LOADING SCREEN
+  // LOADING
   // -------------------------------------------------
 
   if (loading)
@@ -188,12 +150,12 @@ export default function HomePage() {
     );
 
   // -------------------------------------------------
-  // PAGE
+  // PAGE RENDER
   // -------------------------------------------------
 
   return (
     <AnimatedGradientBackground
-      imageUrl={banner ?? ''}
+      imageUrl={photoUrl ?? ''}
       style={{
         color: bgTextColor,
         padding: '20px',
@@ -208,8 +170,8 @@ export default function HomePage() {
             background: panelColor,
             borderRadius: 4,
             p: 3,
-            boxShadow: '0 0 25px rgba(0,0,0,0.35)',
             textAlign: 'center',
+            boxShadow: '0 0 25px rgba(0,0,0,0.35)',
             color: textColor,
           }}
         >
@@ -217,20 +179,20 @@ export default function HomePage() {
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 'bold',
-              mb: 2,
+              fontWeight: 700,
+              mb: 3,
               color: textColor,
             }}
           >
             {artist?.name}
           </Typography>
 
-          {/* ARTIST IMAGE */}
-          {banner && (
+          {/* IMAGE */}
+          {photoUrl && (
             <Box
               component="img"
-              src={banner}
-              alt="banner"
+              src={photoUrl}
+              alt="artist"
               sx={{
                 width: '100%',
                 borderRadius: 3,
@@ -240,54 +202,36 @@ export default function HomePage() {
             />
           )}
 
-          {/* SOCIAL GROUPS */}
-          {Object.entries(groups).map(([group, items]) => (
-            <Box key={group} sx={{ mb: 4 }}>
-              <Typography
-                variant="h6"
+          {/* SOCIAL LIST — NO GROUPS */}
+          <Stack spacing={2}>
+            {socials.map((s) => (
+              <Button
+                key={s.id}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                fullWidth
+                startIcon={getPlatformIcon(s)}
                 sx={{
-                  opacity: 0.7,
-                  mb: 2,
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  color: textColor,
+                  py: 1.6,
+                  borderRadius: 2,
+                  fontSize: 16,
+                  justifyContent: 'flex-start',
+                  textTransform: 'none',
+                  background: buttonColor,
+                  color: buttonTextColor,
+                  boxShadow: '0 0 12px rgba(0,0,0,0.25)',
+                  transition: '0.2s',
+                  '&:hover': {
+                    transform: 'scale(1.03)',
+                    background: buttonColor + 'dd',
+                  },
                 }}
               >
-                {group}
-              </Typography>
-
-              <Stack spacing={2}>
-                {items.map((s) => (
-                  <Button
-                    key={s.id}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    fullWidth
-                    sx={{
-                      py: 1.6,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontSize: 16,
-                      justifyContent: 'flex-start',
-                      gap: 1.6,
-                      background: buttonColor,
-                      color: buttonTextColor,
-                      boxShadow: '0 0 12px rgba(0,0,0,0.25)',
-                      transition: '0.2s',
-                      '&:hover': {
-                        transform: 'scale(1.03)',
-                        background: buttonColor,
-                      },
-                    }}
-                    startIcon={getPlatformIcon(s)}
-                  >
-                    {s.name}
-                  </Button>
-                ))}
-              </Stack>
-            </Box>
-          ))}
+                {s.name}
+              </Button>
+            ))}
+          </Stack>
         </Box>
       </Box>
     </AnimatedGradientBackground>

@@ -6,3 +6,9 @@ export interface Social {
   originalUrl: string;
   socialLabelsList: string[];
 }
+
+export interface SocialLabel {
+  id: string;
+  name: string;
+  description: string;
+}

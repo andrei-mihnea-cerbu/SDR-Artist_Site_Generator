@@ -6,6 +6,7 @@ import {
   Button,
   Stack,
   SvgIcon,
+  Fade,
 } from '@mui/material';
 import axios from 'axios';
 
@@ -91,6 +92,9 @@ export default function HomePage() {
 
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
+  // For fade animations
+  const [fadeIn, setFadeIn] = useState(false);
+
   // -------------------------------------------------
   // LOAD DATA + APPLY COLOR PALETTE
   // -------------------------------------------------
@@ -101,7 +105,7 @@ export default function HomePage() {
         const { data } = await axios.get<InfoResponse>(`/info`);
 
         setArtist(data.artist);
-        setSocials(data.socials); // ⬅ NO GROUPING — exactly as requested
+        setSocials(data.socials); // NO GROUPING
 
         if (data.description.imageGallery.length > 0) {
           const rel = encodeURI(data.description.imageGallery[0]);
@@ -123,6 +127,9 @@ export default function HomePage() {
         console.error('Error loading info:', err);
       } finally {
         setLoading(false);
+
+        // Trigger fade animation AFTER load
+        setTimeout(() => setFadeIn(true), 100);
       }
     };
 
@@ -163,77 +170,86 @@ export default function HomePage() {
         justifyContent: 'center',
       }}
     >
-      <Box sx={{ width: '100%', maxWidth: 650 }}>
-        {/* MAIN PANEL */}
-        <Box
-          sx={{
-            background: panelColor,
-            borderRadius: 4,
-            p: 3,
-            textAlign: 'center',
-            boxShadow: '0 0 25px rgba(0,0,0,0.35)',
-            color: textColor,
-          }}
-        >
-          {/* NAME */}
-          <Typography
-            variant="h3"
+      <Fade in={fadeIn} timeout={700}>
+        <Box sx={{ width: '100%', maxWidth: 650 }}>
+          {/* MAIN PANEL */}
+          <Box
             sx={{
-              fontWeight: 700,
-              mb: 3,
+              background: panelColor,
+              borderRadius: 4,
+              p: 3,
+              textAlign: 'center',
+              boxShadow: '0 0 25px rgba(0,0,0,0.35)',
               color: textColor,
             }}
           >
-            {artist?.name}
-          </Typography>
-
-          {/* IMAGE */}
-          {photoUrl && (
-            <Box
-              component="img"
-              src={photoUrl}
-              alt="artist"
+            {/* NAME */}
+            <Typography
+              variant="h3"
               sx={{
-                width: '100%',
-                borderRadius: 3,
-                mb: 4,
-                boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+                fontWeight: 700,
+                mb: 3,
+                color: textColor,
               }}
-            />
-          )}
+            >
+              {artist?.name}
+            </Typography>
 
-          {/* SOCIAL LIST — NO GROUPS */}
-          <Stack spacing={2}>
-            {socials.map((s) => (
-              <Button
-                key={s.id}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                fullWidth
-                startIcon={getPlatformIcon(s)}
-                sx={{
-                  py: 1.6,
-                  borderRadius: 2,
-                  fontSize: 16,
-                  justifyContent: 'flex-start',
-                  textTransform: 'none',
-                  background: buttonColor,
-                  color: buttonTextColor,
-                  boxShadow: '0 0 12px rgba(0,0,0,0.25)',
-                  transition: '0.2s',
-                  '&:hover': {
-                    transform: 'scale(1.03)',
-                    background: buttonColor + 'dd',
-                  },
-                }}
-              >
-                {s.name}
-              </Button>
-            ))}
-          </Stack>
+            {/* IMAGE */}
+            {photoUrl && (
+              <Fade in={fadeIn} timeout={1000}>
+                <Box
+                  component="img"
+                  src={photoUrl}
+                  alt="artist"
+                  sx={{
+                    width: '100%',
+                    borderRadius: 3,
+                    mb: 4,
+                    boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+                  }}
+                />
+              </Fade>
+            )}
+
+            {/* SOCIAL LIST */}
+            <Stack spacing={2}>
+              {socials.map((s, idx) => (
+                <Fade
+                  key={s.id}
+                  in={fadeIn}
+                  timeout={600 + idx * 120} // stagger fade
+                >
+                  <Button
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    fullWidth
+                    startIcon={getPlatformIcon(s)}
+                    sx={{
+                      py: 1.6,
+                      borderRadius: 2,
+                      fontSize: 16,
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      background: buttonColor,
+                      color: buttonTextColor,
+                      boxShadow: '0 0 12px rgba(0,0,0,0.25)',
+                      transition: '0.2s',
+                      '&:hover': {
+                        transform: 'scale(1.03)',
+                        background: buttonColor + 'dd',
+                      },
+                    }}
+                  >
+                    {s.name}
+                  </Button>
+                </Fade>
+              ))}
+            </Stack>
+          </Box>
         </Box>
-      </Box>
+      </Fade>
     </AnimatedGradientBackground>
   );
 }

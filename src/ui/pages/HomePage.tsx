@@ -8,7 +8,8 @@ import {
   SvgIcon,
 } from "@mui/material";
 import axios from "axios";
-import { Vibrant } from "node-vibrant/node";
+import ColorThief from "color-thief-browser";
+
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
 import LanguageIcon from "@mui/icons-material/Language";
 import StorefrontIcon from "@mui/icons-material/Storefront";
@@ -19,7 +20,10 @@ import { Artist } from "../interfaces/artist";
 import { Social, SocialLabel } from "../interfaces/social";
 import { Description } from "../interfaces/description";
 
-// ---------------- Utilities ----------------------
+
+// -------------------------------------------------
+// UTILITIES
+// -------------------------------------------------
 
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
@@ -34,58 +38,60 @@ const createSimpleIcon = (icon: any) => {
   );
 };
 
-const getContrast = (hex: string) => {
-  const c = hex.replace("#", "");
-  const r = parseInt(c.substr(0, 2), 16);
-  const g = parseInt(c.substr(2, 2), 16);
-  const b = parseInt(c.substr(4, 2), 16);
+const getContrast = (hexOrRgb: string) => {
+  let hex = hexOrRgb;
+
+  if (hex.startsWith("rgb")) {
+    const nums = hex
+      .replace(/[^\d,]/g, "")
+      .split(",")
+      .map((n) => parseInt(n.trim(), 10));
+    const [r, g, b] = nums;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.55 ? "#000" : "#fff";
+  }
+
+  // HEX fallback
+  hex = hex.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.55 ? "#000" : "#fff";
 };
 
-// ---------------- Icon Mapper ----------------------
+
+// -------------------------------------------------
+// ICON MAPPER
+// -------------------------------------------------
 
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = (s.originalUrl || s.url).toLowerCase();
 
-  // MUSIC — specific
+  // SPECIFIC MUSIC APPS
   if (name.includes("spotify")) return createSimpleIcon(simpleIcons.siSpotify);
-
   if (name.includes("apple") || url.includes("music.apple"))
     return createSimpleIcon(simpleIcons.siApple);
-
   if (name.includes("youtube") || url.includes("youtu"))
     return createSimpleIcon(simpleIcons.siYoutube);
-
-  if (name.includes("tiktok"))
-    return createSimpleIcon(simpleIcons.siTiktok);
+  if (name.includes("tiktok")) return createSimpleIcon(simpleIcons.siTiktok);
 
   // GENERIC MUSIC
-  if (
-    name.includes("music") ||
-    url.includes("music.") ||
-    url.includes("/music")
-  ) {
+  if (name.includes("music") || url.includes("/music"))
     return <MusicNoteIcon />;
-  }
 
-  // SOCIAL MEDIA
+  // SOCIAL
   if (name.includes("instagram"))
     return createSimpleIcon(simpleIcons.siInstagram);
-
   if (name.includes("facebook"))
     return createSimpleIcon(simpleIcons.siFacebook);
 
   // SUPPORT
-  if (name.includes("patreon"))
-    return createSimpleIcon(simpleIcons.siPatreon);
-
-  if (name.includes("paypal"))
-    return createSimpleIcon(simpleIcons.siPaypal);
-
-  if (name.includes("gofundme"))
-    return createSimpleIcon(simpleIcons.siGofundme);
+  if (name.includes("patreon")) return createSimpleIcon(simpleIcons.siPatreon);
+  if (name.includes("paypal")) return createSimpleIcon(simpleIcons.siPaypal);
+  if (name.includes("gofundme")) return createSimpleIcon(simpleIcons.siGofundme);
 
   // WEBSITE
   if (name.includes("website") || name.includes("site"))
@@ -99,7 +105,10 @@ const getPlatformIcon = (s: Social) => {
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
-// ---------------- Component ------------------------
+
+// -------------------------------------------------
+// COMPONENT
+// -------------------------------------------------
 
 interface InfoResponse {
   artist: Artist;
@@ -114,17 +123,20 @@ export default function HomePage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
-  const [bgGradient, setBgGradient] = useState<string>(
-    "linear-gradient(135deg, #111, #000)"
-  );
+  const [bgGradient, setBgGradient] = useState("linear-gradient(135deg,#111,#000)");
   const [panelColor, setPanelColor] = useState("rgba(255,255,255,0.12)");
   const [buttonGradient, setButtonGradient] = useState(
-    "linear-gradient(90deg, #ffffff22, #ffffff44)"
+    "linear-gradient(90deg,#ffffff22,#ffffff44)"
   );
   const [textColor, setTextColor] = useState("#fff");
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
+
+
+  // -------------------------------------------------
+  // LOAD DATA + AUTO COLOR EXTRACTION
+  // -------------------------------------------------
 
   useEffect(() => {
     const load = async () => {
@@ -139,48 +151,62 @@ export default function HomePage() {
 
         setArtist(artist);
 
-        // Banner
         if (description.imageGallery.length > 0) {
           const rel = encodeURI(description.imageGallery[0]);
           const full = `${bucket}/${rel}`;
           setBanner(full);
 
-          const palette = await Vibrant.from(full).getPalette();
-          const vibrant = palette.Vibrant?.hex || "#663399";
-          const darkVibrant = palette.DarkVibrant?.hex || "#331a66";
-          const muted = palette.Muted?.hex || "#222";
+          // Extract dominant + palette using color-thief-browser
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = full;
 
-          setBgGradient(
-            `linear-gradient(135deg, ${darkVibrant}dd, ${muted}cc, #000)`
-          );
+          img.onload = () => {
+            const thief = new ColorThief();
 
-          setPanelColor(`${muted}aa`);
+            const dominant = thief.getColor(img);          // [r,g,b]
+            const palette = thief.getPalette(img, 6) || []; // [[r,g,b],...]
 
-          setButtonGradient(
-            `linear-gradient(90deg, ${vibrant}aa, ${darkVibrant}dd)`
-          );
+            const rgb = (arr: number[]) =>
+              `rgb(${arr[0]},${arr[1]},${arr[2]})`;
 
-          setTextColor(getContrast(vibrant));
+            const vibrant = rgb(palette[0] || dominant);
+            const darkVibrant = rgb(palette[1] || dominant);
+            const muted = rgb(palette[2] || [40, 40, 40]);
+
+            setBgGradient(
+              `linear-gradient(135deg, ${darkVibrant}, ${muted}, #000)`
+            );
+
+            setPanelColor(`${muted}aa`);
+            setButtonGradient(
+              `linear-gradient(90deg, ${vibrant}aa, ${darkVibrant}dd)`
+            );
+
+            setTextColor(getContrast(vibrant));
+          };
         }
 
+        // ------- Group Socials -------
         const labelMap: Record<string, string> = {};
         labels.forEach((l) => (labelMap[l.id] = l.name));
 
         const grouped: Record<string, Social[]> = {};
 
         socials.forEach((s) => {
-          if (s.socialLabelsList.length === 0) {
+          if (!s.socialLabelsList.length) {
             (grouped["Other"] ||= []).push(s);
           } else {
             s.socialLabelsList.forEach((id) => {
-              (grouped[labelMap[id] || "Other"] ||= []).push(s);
+              const group = labelMap[id] || "Other";
+              (grouped[group] ||= []).push(s);
             });
           }
         });
 
         setGroups(grouped);
       } catch (err) {
-        console.error(err);
+        console.error("Error loading info:", err);
       } finally {
         setLoading(false);
       }
@@ -189,12 +215,17 @@ export default function HomePage() {
     load();
   }, []);
 
+
+  // -------------------------------------------------
+  // LOADING SCREEN
+  // -------------------------------------------------
+
   if (loading)
     return (
       <Box
         sx={{
           height: "100vh",
-          background: "#000",
+          bgcolor: "#000",
           color: "#fff",
           display: "flex",
           justifyContent: "center",
@@ -205,11 +236,15 @@ export default function HomePage() {
       </Box>
     );
 
+
+  // -------------------------------------------------
+  // RENDER PAGE
+  // -------------------------------------------------
+
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        width: "100%",
         background: bgGradient,
         color: textColor,
         p: 3,
@@ -217,19 +252,9 @@ export default function HomePage() {
         justifyContent: "center",
       }}
     >
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: 650,
-          mx: "auto",
-          textAlign: "center",
-        }}
-      >
+      <Box sx={{ width: "100%", maxWidth: 650, textAlign: "center" }}>
         {/* ARTIST NAME */}
-        <Typography
-          variant="h3"
-          sx={{ fontWeight: "bold", mb: 2 }}
-        >
+        <Typography variant="h3" sx={{ fontWeight: "bold", mb: 2 }}>
           {artist?.name}
         </Typography>
 
@@ -247,17 +272,17 @@ export default function HomePage() {
           />
         )}
 
-        {/* PANEL */}
+        {/* GLASS PANEL */}
         <Box
           sx={{
-            backdropFilter: "blur(12px)",
+            backdropFilter: "blur(14px)",
             borderRadius: 4,
             p: 3,
             background: panelColor,
-            boxShadow: "0 0 40px #0007",
+            boxShadow: "0 0 35px #0007",
           }}
         >
-          {Object.entries(groups).map(([group, items], idx) => (
+          {Object.entries(groups).map(([group, items]) => (
             <Box key={group} sx={{ mb: 4 }}>
               <Typography
                 variant="h6"
@@ -288,10 +313,10 @@ export default function HomePage() {
                       gap: 1.6,
                       color: textColor,
                       background: buttonGradient,
-                      boxShadow: "0 0 10px #0006",
+                      boxShadow: "0 0 12px #0006",
+                      transition: "0.2s",
                       "&:hover": {
                         transform: "scale(1.02)",
-                        transition: "0.2s",
                       },
                     }}
                     startIcon={getPlatformIcon(s)}

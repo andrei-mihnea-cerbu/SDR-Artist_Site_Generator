@@ -55,9 +55,6 @@ const DonatePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Theme state
-  const [bgGradient, setBgGradient] = useState(
-    'linear-gradient(135deg,#111,#000)'
-  );
   const [panelColor, setPanelColor] = useState('rgba(0,0,0,0.8)');
   const [textColor, setTextColor] = useState('#fff');
 
@@ -88,13 +85,7 @@ const DonatePage: React.FC = () => {
         const rgb = (arr: number[]) => `rgb(${arr[0]},${arr[1]},${arr[2]})`;
 
         const vibrant = rgb(palette[0] || dominant);
-        const darkVibrant = rgb(palette[1] || dominant);
         const muted = rgb(palette[2] || [40, 40, 40]);
-
-        // Set themed background
-        setBgGradient(
-          `linear-gradient(135deg, ${darkVibrant}, ${muted}, #000)`
-        );
 
         // Panel
         setPanelColor(`${muted}dd`);
@@ -150,7 +141,6 @@ const DonatePage: React.FC = () => {
   return (
     <AnimatedGradientBackground
       imageUrl={photoUrl}
-      dynamicGradient={bgGradient}
     >
       <Paper
         elevation={10}

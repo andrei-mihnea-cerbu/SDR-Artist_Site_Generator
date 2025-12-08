@@ -115,9 +115,6 @@ export default function HomePage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
-  const [bgGradient, setBgGradient] = useState(
-    'linear-gradient(135deg,#111,#000)'
-  );
   const [panelColor, setPanelColor] = useState('rgba(255,255,255,0.12)');
   const [buttonGradient, setButtonGradient] = useState(
     'linear-gradient(90deg,#ffffff22,#ffffff44)'
@@ -165,10 +162,6 @@ export default function HomePage() {
             const vibrant = rgb(palette[0] || dominant);
             const darkVibrant = rgb(palette[1] || dominant);
             const muted = rgb(palette[2] || [40, 40, 40]);
-
-            setBgGradient(
-              `linear-gradient(135deg, ${darkVibrant}, ${muted}, #000)`
-            );
 
             setPanelColor(`${muted}aa`);
             setButtonGradient(
@@ -234,7 +227,6 @@ export default function HomePage() {
   return (
     <AnimatedGradientBackground
       imageUrl={banner ?? ''}
-      dynamicGradient={bgGradient}
       style={{
         color: textColor,
         padding: '24px',

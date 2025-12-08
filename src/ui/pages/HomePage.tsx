@@ -7,7 +7,7 @@ import {
   Stack,
   useMediaQuery,
   Fade,
-  SvgIcon
+  SvgIcon,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
@@ -18,7 +18,7 @@ import { Description } from '../interfaces/description';
 import { Social, SocialLabel } from '../interfaces/social';
 
 // SIMPLE ICONS
-import * as simpleIcons from "simple-icons";
+import * as simpleIcons from 'simple-icons';
 
 // Types
 interface InfoResponse {
@@ -53,61 +53,53 @@ const createSimpleIcon = (icon: any) => {
 };
 
 // ICON DETECTION — best possible matching
-import MusicNoteIcon from "@mui/icons-material/MusicNote";
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
 
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = (s.originalUrl || s.url).toLowerCase();
 
   // SPECIFIC MUSIC PLATFORMS
-  if (name.includes("spotify")) 
-    return createSimpleIcon(simpleIcons.siSpotify);
+  if (name.includes('spotify')) return createSimpleIcon(simpleIcons.siSpotify);
 
   // Apple Music does NOT exist in Simple Icons → use generic Apple
-  if (
-    name.includes("apple") || 
-    url.includes("music.apple")
-  )
+  if (name.includes('apple') || url.includes('music.apple'))
     return createSimpleIcon(simpleIcons.siApple);
 
   // YouTube
-  if (name.includes("youtube") || url.includes("youtu"))
+  if (name.includes('youtube') || url.includes('youtu'))
     return createSimpleIcon(simpleIcons.siYoutube);
 
   // TikTok
-  if (name.includes("tiktok"))
-    return createSimpleIcon(simpleIcons.siTiktok);
+  if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
 
   // GENERIC MUSIC (Amazon Music, Deezer, Pandora, Tidal, etc.)
   if (
-    name.includes("music") || 
-    url.includes("music.") || 
-    url.includes("/music")
+    name.includes('music') ||
+    url.includes('music.') ||
+    url.includes('/music')
   ) {
     return <MusicNoteIcon sx={{ width: 24, height: 24 }} />;
   }
 
   // SOCIAL MEDIA
-  if (name.includes("instagram"))
+  if (name.includes('instagram'))
     return createSimpleIcon(simpleIcons.siInstagram);
 
-  if (name.includes("facebook"))
+  if (name.includes('facebook'))
     return createSimpleIcon(simpleIcons.siFacebook);
 
   // SUPPORT / DONATION
-  if (name.includes("patreon"))
-    return createSimpleIcon(simpleIcons.siPatreon);
+  if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
 
-  if (name.includes("paypal"))
-    return createSimpleIcon(simpleIcons.siPaypal);
+  if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
 
-  if (name.includes("gofundme"))
+  if (name.includes('gofundme'))
     return createSimpleIcon(simpleIcons.siGofundme);
 
   // WEBSITE / OTHER (generic internet icon)
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
-
 
 // COMPONENT ----------------------------------------------------------------
 
@@ -118,7 +110,7 @@ const HomePage: React.FC = () => {
   const [groups, setGroups] = useState<GroupedSocials>({});
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
@@ -128,7 +120,7 @@ const HomePage: React.FC = () => {
     const fetchAll = async () => {
       try {
         const [infoRes, labelsRes] = await Promise.all([
-          axios.get<InfoResponse>(`${apiUrl}/info`),
+          axios.get<InfoResponse>(`/info`),
           axios.get<SocialLabel[]>(`${apiUrl}/socials/labels`),
         ]);
 
@@ -152,11 +144,11 @@ const HomePage: React.FC = () => {
 
         socials.forEach((s) => {
           if (s.socialLabelsList.length === 0) {
-            if (!grouped["Other"]) grouped["Other"] = [];
-            grouped["Other"].push(s);
+            if (!grouped['Other']) grouped['Other'] = [];
+            grouped['Other'].push(s);
           } else {
             s.socialLabelsList.forEach((labelId) => {
-              const group = labelMap[labelId] || "Other";
+              const group = labelMap[labelId] || 'Other';
               if (!grouped[group]) grouped[group] = [];
               grouped[group].push(s);
             });
@@ -165,7 +157,7 @@ const HomePage: React.FC = () => {
 
         setGroups(grouped);
       } catch (err) {
-        console.error("Failed to load homepage:", err);
+        console.error('Failed to load homepage:', err);
       } finally {
         setLoading(false);
       }
@@ -179,12 +171,12 @@ const HomePage: React.FC = () => {
     return (
       <Box
         sx={{
-          height: "100vh",
-          background: "#000",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "white",
+          height: '100vh',
+          background: '#000',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: 'white',
         }}
       >
         <CircularProgress color="inherit" />
@@ -207,13 +199,13 @@ const HomePage: React.FC = () => {
 
       <Box
         sx={{
-          height: "100vh",
-          width: "100%",
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          background: "linear-gradient(135deg, #0f0f1f, #1a1a33, #0e0e19)",
-          color: "white",
-          overflow: "hidden",
+          height: '100vh',
+          width: '100%',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          background: 'linear-gradient(135deg, #0f0f1f, #1a1a33, #0e0e19)',
+          color: 'white',
+          overflow: 'hidden',
         }}
       >
         {/* LEFT PANEL ------------------------------------------------------- */}
@@ -223,17 +215,20 @@ const HomePage: React.FC = () => {
             p: 4,
             mt: 4,
             mb: 4,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             gap: 3,
-            overflowY: "auto",
+            overflowY: 'auto',
           }}
         >
           {/* Artist Name */}
-          <Box sx={{ ...fadeIn, animationDelay: "0.1s" }}>
+          <Box sx={{ ...fadeIn, animationDelay: '0.1s' }}>
             <Typography
-              variant={isMobile ? "h4" : "h3"}
-              sx={{ fontWeight: "bold", textAlign: isMobile ? "center" : "left" }}
+              variant={isMobile ? 'h4' : 'h3'}
+              sx={{
+                fontWeight: 'bold',
+                textAlign: isMobile ? 'center' : 'left',
+              }}
             >
               {artist?.name}
             </Typography>
@@ -250,8 +245,8 @@ const HomePage: React.FC = () => {
                   variant="h6"
                   sx={{
                     opacity: 0.7,
-                    textAlign: "center",
-                    textTransform: "uppercase",
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
                     mb: 1,
                     letterSpacing: 1,
                   }}
@@ -271,18 +266,18 @@ const HomePage: React.FC = () => {
                       sx={{
                         py: 1.8,
                         borderRadius: 2,
-                        textTransform: "none",
+                        textTransform: 'none',
                         background:
-                          "linear-gradient(90deg, #6A5ACD,#7B68EE,#6A5ACD)",
-                        display: "flex",
-                        justifyContent: "flex-start",
-                        alignItems: "center",
+                          'linear-gradient(90deg, #6A5ACD,#7B68EE,#6A5ACD)',
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
                         fontSize: 16,
                         fontWeight: 600,
                         gap: 1.5,
                         '&:hover': {
-                          transform: "scale(1.03)",
-                          transition: "0.2s",
+                          transform: 'scale(1.03)',
+                          transition: '0.2s',
                         },
                       }}
                       startIcon={getPlatformIcon(s)}
@@ -301,12 +296,12 @@ const HomePage: React.FC = () => {
           <Box
             sx={{
               flex: 1,
-              position: "relative",
-              minHeight: "100vh",
-              backgroundColor: "#000",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              position: 'relative',
+              minHeight: '100vh',
+              backgroundColor: '#000',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               p: 2,
             }}
           >
@@ -316,9 +311,9 @@ const HomePage: React.FC = () => {
                 src={banner}
                 alt="Banner"
                 sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
                 }}
               />
             ) : (

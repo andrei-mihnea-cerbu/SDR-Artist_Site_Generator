@@ -39,7 +39,6 @@ const createSimpleIcon = (icon: any) => {
   );
 };
 
-// ICON MAPPER
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = (s.originalUrl || s.url).toLowerCase();
@@ -82,19 +81,19 @@ export default function HomePage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
-  // Theme colors (solid panel + button gradient + solid text)
+  // Theme (solid panel + solid buttons)
   const [panelColor, setPanelColor] = useState('#fff');
-  const [buttonGradient, setButtonGradient] = useState(
-    'linear-gradient(90deg,#fff,#eee)'
-  );
-  const [textColor, setTextColor] = useState('#000'); // used INSIDE panel (solid)
-  const [bgTextColor, setBgTextColor] = useState('#fff'); // used in GRADIENT wrapper
+  const [textColor, setTextColor] = useState('#000');
+  const [bgTextColor, setBgTextColor] = useState('#fff');
+
+  const [buttonColor, setButtonColor] = useState('#333');
+  const [buttonTextColor, setButtonTextColor] = useState('#fff');
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // -------------------------------------------------
-  // LOAD DATA + COLOR EXTRACTION
+  // LOAD + APPLY COLOR PALETTE
   // -------------------------------------------------
 
   useEffect(() => {
@@ -119,33 +118,31 @@ export default function HomePage() {
 
           if (palette) {
             const {
-              vibrant,
-              dark,
               oppositeSolid,
               solidTextColor,
               textColor: gradientTextColor,
+              buttonSolid,
+              buttonTextColor,
             } = palette;
 
-            // Panel background (light/dark opposite)
+            // Panel
             setPanelColor(oppositeSolid);
-
-            // Buttons → gradient from vibrant to dark
-            setButtonGradient(
-              `linear-gradient(90deg, ${vibrant}dd, ${dark}ee)`
-            );
-
-            // Solid text color for panel elements
             setTextColor(solidTextColor);
 
-            // Text color for gradient wrapper
+            // Gradient wrapper text
             setBgTextColor(gradientTextColor);
+
+            // Buttons (solid)
+            setButtonColor(buttonSolid);
+            setButtonTextColor(buttonTextColor);
           }
         }
 
-        // Group socials
+        // Map label names
         const labelMap: Record<string, string> = {};
         labels.forEach((l) => (labelMap[l.id] = l.name));
 
+        // Group socials
         const grouped: Record<string, Social[]> = {};
 
         socials.forEach((s) => {
@@ -191,7 +188,7 @@ export default function HomePage() {
     );
 
   // -------------------------------------------------
-  // PAGE RENDER
+  // PAGE
   // -------------------------------------------------
 
   return (
@@ -228,7 +225,7 @@ export default function HomePage() {
             {artist?.name}
           </Typography>
 
-          {/* PHOTO */}
+          {/* ARTIST IMAGE */}
           {banner && (
             <Box
               component="img"
@@ -243,7 +240,7 @@ export default function HomePage() {
             />
           )}
 
-          {/* SOCIAL SECTIONS */}
+          {/* SOCIAL GROUPS */}
           {Object.entries(groups).map(([group, items]) => (
             <Box key={group} sx={{ mb: 4 }}>
               <Typography
@@ -274,11 +271,14 @@ export default function HomePage() {
                       fontSize: 16,
                       justifyContent: 'flex-start',
                       gap: 1.6,
-                      color: textColor,
-                      background: buttonGradient,
+                      background: buttonColor,
+                      color: buttonTextColor,
                       boxShadow: '0 0 12px rgba(0,0,0,0.25)',
                       transition: '0.2s',
-                      '&:hover': { transform: 'scale(1.02)' },
+                      '&:hover': {
+                        transform: 'scale(1.03)',
+                        background: buttonColor,
+                      },
                     }}
                     startIcon={getPlatformIcon(s)}
                   >

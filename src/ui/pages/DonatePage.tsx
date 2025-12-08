@@ -37,15 +37,18 @@ export default function DonatePage() {
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
 
-  // Panel uses solid opposite color
+  // Dynamic UI palette
   const [panelColor, setPanelColor] = useState('#222');
-  const [textColor, setTextColor] = useState('#fff');
+  const [panelTextColor, setPanelTextColor] = useState('#fff');
+
+  const [buttonColor, setButtonColor] = useState('#333');
+  const [buttonTextColor, setButtonTextColor] = useState('#fff');
 
   const { setNotification } = useNotification();
   const bucketUrl = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // ----------------------------------------------------
-  // Load artist + color palette
+  // Load artist + apply theme
   // ----------------------------------------------------
   useEffect(() => {
     localStorage.removeItem('sdr-donation-text');
@@ -54,18 +57,19 @@ export default function DonatePage() {
       const res = await axios.get<InfoResponse>('/info');
       setInfo(res.data);
 
-      const rel = res.data.description.imageGallery[0];
-      const encoded = encodeURI(rel);
-      const imgUrl = `${bucketUrl}/${encoded}`;
+      const imgRel = res.data.description.imageGallery[0];
+      const url = `${bucketUrl}/${encodeURI(imgRel)}`;
 
-      const palette = await ColorEngineInstance.extractPalette(imgUrl);
+      const palette = await ColorEngineInstance.extractPalette(url);
 
       if (palette) {
-        // Use SOLID panel background (opposite of gradient)
+        // PANEL (opposite solid)
         setPanelColor(palette.oppositeSolid);
+        setPanelTextColor(palette.solidTextColor);
 
-        // IMPORTANT: Use solidTextColor (not textColor)
-        setTextColor(palette.solidTextColor);
+        // BUTTONS (darkened oppositeSolid)
+        setButtonColor(palette.buttonSolid);
+        setButtonTextColor(palette.buttonTextColor);
       }
     })();
   }, []);
@@ -91,7 +95,7 @@ export default function DonatePage() {
       )?.href;
 
       if (approvalLink) window.location.href = approvalLink;
-      else throw new Error('Approval link not found');
+      else throw new Error('Missing PayPal approval link');
     } catch (err) {
       console.error(err);
       setNotification(
@@ -113,12 +117,10 @@ export default function DonatePage() {
 
   if (!info) return null;
 
-  const relativePath = info.description.imageGallery[0];
-  const encodedPath = encodeURI(relativePath);
-  const photoUrl = `${bucketUrl}/${encodedPath}`;
+  const artistPhoto = `${bucketUrl}/${encodeURI(info.description.imageGallery[0])}`;
 
   return (
-    <AnimatedGradientBackground imageUrl={photoUrl}>
+    <AnimatedGradientBackground imageUrl={artistPhoto}>
       <Paper
         elevation={12}
         sx={{
@@ -128,19 +130,19 @@ export default function DonatePage() {
           borderRadius: 4,
           textAlign: 'center',
           backgroundColor: panelColor,
-          color: textColor,
+          color: panelTextColor,
           boxShadow: '0 0 30px rgba(0,0,0,0.4)',
           transition: '0.25s ease all',
         }}
       >
-        {/* STEP NAV */}
+        {/* -------------------- STEP NAV -------------------- */}
         <Box
           sx={{
             mb: 3,
             display: 'flex',
             justifyContent: 'space-between',
             userSelect: 'none',
-            color: textColor,
+            color: panelTextColor,
           }}
         >
           <Tooltip title="Write your message">
@@ -148,8 +150,8 @@ export default function DonatePage() {
               variant="subtitle2"
               sx={{
                 cursor: 'pointer',
-                color: step === 1 ? textColor : '#777',
-                '&:hover': { color: textColor },
+                color: step === 1 ? panelTextColor : '#777',
+                '&:hover': { color: panelTextColor },
                 fontWeight: step === 1 ? 700 : 400,
               }}
               onClick={() => setStep(1)}
@@ -163,8 +165,8 @@ export default function DonatePage() {
               variant="subtitle2"
               sx={{
                 cursor: 'pointer',
-                color: step === 2 ? textColor : '#777',
-                '&:hover': { color: textColor },
+                color: step === 2 ? panelTextColor : '#777',
+                '&:hover': { color: panelTextColor },
                 fontWeight: step === 2 ? 700 : 400,
               }}
               onClick={() => setStep(2)}
@@ -174,7 +176,7 @@ export default function DonatePage() {
           </Tooltip>
         </Box>
 
-        {/* PROGRESS BAR */}
+        {/* -------------------- PROGRESS -------------------- */}
         <LinearProgress
           variant="determinate"
           value={step === 1 ? 50 : 100}
@@ -183,14 +185,14 @@ export default function DonatePage() {
             borderRadius: 3,
             mb: 3,
             backgroundColor: 'rgba(255,255,255,0.1)',
-            '& .MuiLinearProgress-bar': { backgroundColor: '#0070BA' },
+            '& .MuiLinearProgress-bar': { backgroundColor: buttonColor },
           }}
         />
 
-        {/* ARTIST PHOTO */}
+        {/* -------------------- ARTIST PHOTO -------------------- */}
         <Box
           component="img"
-          src={photoUrl}
+          src={artistPhoto}
           alt="artist"
           sx={{
             width: 120,
@@ -198,7 +200,7 @@ export default function DonatePage() {
             borderRadius: '50%',
             objectFit: 'cover',
             mb: 2,
-            border: `3px solid ${textColor}`,
+            border: `3px solid ${panelTextColor}`,
             boxShadow: '0 0 12px rgba(0,0,0,0.5)',
           }}
         />
@@ -207,7 +209,7 @@ export default function DonatePage() {
           Support {info.artist.name}
         </Typography>
 
-        {/* CONTENT */}
+        {/* -------------------- MAIN CONTENT -------------------- */}
         <Box sx={{ minHeight: 230, position: 'relative', mb: 2 }}>
           {/* STEP 1 */}
           <Fade in={step === 1} timeout={400} unmountOnExit>
@@ -234,7 +236,8 @@ export default function DonatePage() {
                   mt: 3,
                   py: 1.4,
                   fontWeight: 600,
-                  backgroundColor: '#0070BA',
+                  backgroundColor: buttonColor,
+                  color: buttonTextColor,
                 }}
               >
                 Continue
@@ -289,7 +292,8 @@ export default function DonatePage() {
                 sx={{
                   py: 1.4,
                   fontWeight: 700,
-                  backgroundColor: '#0070BA',
+                  backgroundColor: buttonColor,
+                  color: buttonTextColor,
                 }}
               >
                 {loading ? 'PROCESSING...' : 'DONATE WITH PAYPAL'}
@@ -299,7 +303,7 @@ export default function DonatePage() {
                 onClick={() => setStep(1)}
                 sx={{
                   mt: 2,
-                  color: textColor,
+                  color: panelTextColor,
                   textDecoration: 'underline',
                 }}
               >

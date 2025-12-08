@@ -37,8 +37,8 @@ export default function DonatePage() {
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
 
-  // Auto-themed UI colors
-  const [panelColor, setPanelColor] = useState('rgba(0,0,0,0.8)');
+  // Fully solid UI colors (no transparency)
+  const [panelColor, setPanelColor] = useState('#222');
   const [textColor, setTextColor] = useState('#fff');
 
   const { setNotification } = useNotification();
@@ -62,8 +62,8 @@ export default function DonatePage() {
       const palette = await ColorEngineInstance.extractPalette(imgUrl);
 
       if (palette) {
-        // Slight transparency for the panel glass
-        setPanelColor(`${palette.mid}dd`);
+        // Use SOLID opposite color for donation card background
+        setPanelColor(palette.oppositeSolid);
         setTextColor(palette.textColor);
       }
     })();
@@ -122,16 +122,17 @@ export default function DonatePage() {
   return (
     <AnimatedGradientBackground imageUrl={photoUrl}>
       <Paper
-        elevation={10}
+        elevation={12}
         sx={{
-          maxWidth: 420,
+          maxWidth: 440,
           margin: '80px auto',
           padding: 4,
           borderRadius: 4,
           textAlign: 'center',
-          backgroundColor: panelColor,
+          backgroundColor: panelColor, // SOLID color only
           color: textColor,
-          transition: '0.25s ease background-color, 0.25s ease color',
+          boxShadow: '0 0 30px rgba(0,0,0,0.4)',
+          transition: '0.25s ease all',
         }}
       >
         {/* --------------------------- STEP NAV --------------------------- */}
@@ -148,8 +149,9 @@ export default function DonatePage() {
               variant="subtitle2"
               sx={{
                 cursor: 'pointer',
-                color: step === 1 ? textColor : '#aaa',
+                color: step === 1 ? textColor : '#777',
                 '&:hover': { color: textColor },
+                fontWeight: step === 1 ? 700 : 400,
               }}
               onClick={() => setStep(1)}
             >
@@ -162,8 +164,9 @@ export default function DonatePage() {
               variant="subtitle2"
               sx={{
                 cursor: 'pointer',
-                color: step === 2 ? textColor : '#aaa',
+                color: step === 2 ? textColor : '#777',
                 '&:hover': { color: textColor },
+                fontWeight: step === 2 ? 700 : 400,
               }}
               onClick={() => setStep(2)}
             >
@@ -180,7 +183,7 @@ export default function DonatePage() {
             height: 6,
             borderRadius: 3,
             mb: 3,
-            backgroundColor: 'rgba(255,255,255,0.15)',
+            backgroundColor: 'rgba(255,255,255,0.1)',
             '& .MuiLinearProgress-bar': { backgroundColor: '#0070BA' },
           }}
         />

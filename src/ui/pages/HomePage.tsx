@@ -39,10 +39,7 @@ const createSimpleIcon = (icon: any) => {
   );
 };
 
-// -------------------------------------------------
 // ICON MAPPER
-// -------------------------------------------------
-
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = (s.originalUrl || s.url).toLowerCase();
@@ -54,8 +51,7 @@ const getPlatformIcon = (s: Social) => {
     return createSimpleIcon(simpleIcons.siYoutube);
   if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
 
-  if (name.includes('music') || url.includes('/music'))
-    return <MusicNoteIcon />;
+  if (name.includes('music')) return <MusicNoteIcon />;
 
   if (name.includes('instagram'))
     return createSimpleIcon(simpleIcons.siInstagram);
@@ -87,11 +83,11 @@ export default function HomePage() {
   const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
   // Theme colors
-  const [panelColor, setPanelColor] = useState('rgba(255,255,255,0.12)');
+  const [panelColor, setPanelColor] = useState('rgba(255,255,255,1)');
   const [buttonGradient, setButtonGradient] = useState(
-    'linear-gradient(90deg,#ffffff22,#ffffff44)'
+    'linear-gradient(90deg,#ffffff,#eeeeee)'
   );
-  const [textColor, setTextColor] = useState('#fff');
+  const [textColor, setTextColor] = useState('#000');
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
@@ -110,9 +106,9 @@ export default function HomePage() {
 
         const { artist, description, socials } = infoRes.data;
         const labels = labelsRes.data;
+
         setArtist(artist);
 
-        // --- Extract Theme Colors ---
         if (description.imageGallery.length > 0) {
           const rel = encodeURI(description.imageGallery[0]);
           const full = `${bucket}/${rel}`;
@@ -121,17 +117,21 @@ export default function HomePage() {
           const palette = await ColorEngineInstance.extractPalette(full);
 
           if (palette) {
-            const { vibrant, dark, mid, textColor } = palette;
+            const { vibrant, dark, textColor, oppositeSolid } = palette;
 
-            setPanelColor(`${mid}aa`);
+            // Panel uses opposite solid background
+            setPanelColor(oppositeSolid);
+
+            // Buttons use gradient based on palette
             setButtonGradient(
-              `linear-gradient(90deg, ${vibrant}aa, ${dark}dd)`
+              `linear-gradient(90deg, ${vibrant}dd, ${dark}ee)`
             );
+
             setTextColor(textColor);
           }
         }
 
-        // --- Group Socials ---
+        // ------- Group Socials -------
         const labelMap: Record<string, string> = {};
         labels.forEach((l) => (labelMap[l.id] = l.name));
 
@@ -188,50 +188,60 @@ export default function HomePage() {
       imageUrl={banner ?? ''}
       style={{
         color: textColor,
-        padding: '24px',
+        padding: '20px',
         display: 'flex',
         justifyContent: 'center',
       }}
     >
-      <Box sx={{ width: '100%', maxWidth: 650, textAlign: 'center' }}>
-        {/* ARTIST NAME */}
-        <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2 }}>
-          {artist?.name}
-        </Typography>
-
-        {/* BANNER */}
-        {banner && (
-          <Box
-            component="img"
-            src={banner}
-            alt="banner"
-            sx={{
-              width: '100%',
-              borderRadius: 3,
-              mb: 4,
-            }}
-          />
-        )}
-
-        {/* GLASS PANEL */}
+      <Box sx={{ width: '100%', maxWidth: 650 }}>
+        {/* MAIN PANEL (solid color, includes title & image) */}
         <Box
           sx={{
-            backdropFilter: 'blur(14px)',
+            background: panelColor,
             borderRadius: 4,
             p: 3,
-            background: panelColor,
-            boxShadow: '0 0 35px #0007',
+            boxShadow: '0 0 25px rgba(0,0,0,0.35)',
+            textAlign: 'center',
           }}
         >
+          {/* ARTIST NAME */}
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 'bold',
+              mb: 2,
+              color: textColor,
+            }}
+          >
+            {artist?.name}
+          </Typography>
+
+          {/* BANNER IMAGE INSIDE PANEL */}
+          {banner && (
+            <Box
+              component="img"
+              src={banner}
+              alt="banner"
+              sx={{
+                width: '100%',
+                borderRadius: 3,
+                mb: 4,
+                boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+              }}
+            />
+          )}
+
+          {/* SOCIAL GROUPS */}
           {Object.entries(groups).map(([group, items]) => (
             <Box key={group} sx={{ mb: 4 }}>
               <Typography
                 variant="h6"
                 sx={{
-                  opacity: 0.8,
+                  opacity: 0.7,
                   mb: 2,
                   textTransform: 'uppercase',
                   letterSpacing: 1,
+                  color: textColor,
                 }}
               >
                 {group}
@@ -254,7 +264,7 @@ export default function HomePage() {
                       gap: 1.6,
                       color: textColor,
                       background: buttonGradient,
-                      boxShadow: '0 0 12px #0006',
+                      boxShadow: '0 0 12px rgba(0,0,0,0.25)',
                       transition: '0.2s',
                       '&:hover': { transform: 'scale(1.02)' },
                     }}

@@ -1,19 +1,37 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AnimatedGradientBackgroundProps {
-  imageUrl: string;
+  imageUrl: string; // Required: image to extract colors from
+  dynamicGradient?: string | null; // Optional: override gradient from parent
   children?: React.ReactNode;
   style?: React.CSSProperties;
 }
 
 const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
   imageUrl,
+  dynamicGradient,
   children,
   style,
 }) => {
   const rootRef = useRef<HTMLDivElement>(null);
+  const [gradient, setGradient] = useState<string>(
+    'linear-gradient(135deg,#111,#000)'
+  );
 
+  // Helper to produce rgb string
+  const rgb = (r: number, g: number, b: number) => `rgb(${r},${g},${b})`;
+
+  // If parent supplies a gradient (HomePage / DonatePage)
   useEffect(() => {
+    if (dynamicGradient && rootRef.current) {
+      setGradient(dynamicGradient);
+    }
+  }, [dynamicGradient]);
+
+  // If no dynamicGradient was provided → auto extract from image
+  useEffect(() => {
+    if (dynamicGradient) return; // skip extraction if provided by parent
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = imageUrl;
@@ -25,33 +43,32 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
 
       canvas.width = img.width;
       canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      const colorMap: Record<string, number> = {};
+      // Sampling every 24 pixels → great performance + accurate enough
+      const map: Record<string, number> = {};
       for (let i = 0; i < data.length; i += 4 * 24) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
         const key = `${r},${g},${b}`;
-        colorMap[key] = (colorMap[key] || 0) + 1;
+        map[key] = (map[key] || 0) + 1;
       }
 
-      const sortedColors = Object.entries(colorMap)
+      // Extract top 3 colors
+      const topColors = Object.entries(map)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3)
-        .map(([color]) => `rgb(${color})`);
+        .map(([key]) => `rgb(${key})`);
 
-      if (sortedColors.length > 1 && rootRef.current) {
-        rootRef.current.style.backgroundImage = `linear-gradient(-45deg, ${sortedColors.join(', ')})`;
-        rootRef.current.style.backgroundSize = '400% 400%';
-        rootRef.current.style.animation = 'gradientFlow 15s ease infinite';
-        rootRef.current.style.backgroundPosition = '0% 50%';
+      if (topColors.length >= 2) {
+        const newGradient = `linear-gradient(-45deg, ${topColors.join(', ')})`;
+        setGradient(newGradient);
       }
     };
-  }, [imageUrl]);
+  }, [imageUrl, dynamicGradient]);
 
   return (
     <div
@@ -62,15 +79,27 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#111', // fallback if gradient fails
-        color: 'white',
-        animation: 'gradientFlow 15s ease infinite',
+        backgroundImage: gradient,
         backgroundSize: '400% 400%',
         backgroundPosition: '0% 50%',
+        animation: 'gradientFlow 15s ease infinite',
+        transition: 'background-image 1s ease-in-out',
+        color: 'white',
         ...style,
       }}
     >
       {children}
+
+      {/* KEYFRAMES (global-safe inline) */}
+      <style>
+        {`
+          @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}
+      </style>
     </div>
   );
 };

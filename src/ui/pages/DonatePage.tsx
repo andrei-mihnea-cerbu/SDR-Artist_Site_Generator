@@ -13,6 +13,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import axios from 'axios';
+import ColorThief from 'color-thief-browser';
+
 import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
 import { Artist } from '../interfaces/artist';
 import { Description } from '../interfaces/description';
@@ -23,6 +25,26 @@ interface InfoResponse {
   description: Description;
 }
 
+const getContrast = (hexOrRgb: string) => {
+  if (hexOrRgb.startsWith('rgb')) {
+    const nums = hexOrRgb
+      .replace(/[^\d,]/g, '')
+      .split(',')
+      .map((n) => parseInt(n.trim(), 10));
+    const [r, g, b] = nums;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.55 ? '#000' : '#fff';
+  }
+
+  const hex = hexOrRgb.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  return luminance > 0.55 ? '#000' : '#fff';
+};
+
 const DonatePage: React.FC = () => {
   const [info, setInfo] = useState<InfoResponse | null>(null);
   const [step, setStep] = useState<1 | 2>(1);
@@ -32,12 +54,55 @@ const DonatePage: React.FC = () => {
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
 
+  // Theme state
+  const [bgGradient, setBgGradient] = useState(
+    'linear-gradient(135deg,#111,#000)'
+  );
+  const [panelColor, setPanelColor] = useState('rgba(0,0,0,0.8)');
+  const [textColor, setTextColor] = useState('#fff');
+
   const { setNotification } = useNotification();
   const bucketUrl = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
+  // Load info + generate theme
   useEffect(() => {
     localStorage.removeItem('sdr-donation-text');
-    axios.get<InfoResponse>('/info').then((res) => setInfo(res.data));
+
+    axios.get<InfoResponse>('/info').then(async (res) => {
+      setInfo(res.data);
+
+      const rel = res.data.description.imageGallery[0];
+      const encoded = encodeURI(rel);
+      const imgUrl = `${bucketUrl}/${encoded}`;
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = imgUrl;
+
+      img.onload = () => {
+        const thief = new ColorThief();
+
+        const dominant = thief.getColor(img); // [r,g,b]
+        const palette = thief.getPalette(img, 6) || [];
+
+        const rgb = (arr: number[]) => `rgb(${arr[0]},${arr[1]},${arr[2]})`;
+
+        const vibrant = rgb(palette[0] || dominant);
+        const darkVibrant = rgb(palette[1] || dominant);
+        const muted = rgb(palette[2] || [40, 40, 40]);
+
+        // Set themed background
+        setBgGradient(
+          `linear-gradient(135deg, ${darkVibrant}, ${muted}, #000)`
+        );
+
+        // Panel
+        setPanelColor(`${muted}dd`);
+
+        // Auto text color (white or black)
+        setTextColor(getContrast(vibrant));
+      };
+    });
   }, []);
 
   const handleSubmit = async () => {
@@ -80,12 +145,13 @@ const DonatePage: React.FC = () => {
 
   const relativePath = info.description.imageGallery[0];
   const encodedPath = encodeURI(relativePath);
-  const photoUrl = info.description.imageGallery[0]
-    ? `${bucketUrl}/${encodedPath}`
-    : '';
+  const photoUrl = `${bucketUrl}/${encodedPath}`;
 
   return (
-    <AnimatedGradientBackground imageUrl={photoUrl}>
+    <AnimatedGradientBackground
+      imageUrl={photoUrl}
+      dynamicGradient={bgGradient}
+    >
       <Paper
         elevation={10}
         sx={{
@@ -94,10 +160,11 @@ const DonatePage: React.FC = () => {
           padding: 4,
           borderRadius: 4,
           textAlign: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.9)',
-          color: 'white',
+          backgroundColor: panelColor,
+          color: textColor,
           overflow: 'hidden',
           position: 'relative',
+          transition: '0.3s ease background-color',
         }}
       >
         {/* Step Navigation */}
@@ -115,10 +182,9 @@ const DonatePage: React.FC = () => {
             <Typography
               variant="subtitle2"
               sx={{
-                color: step === 1 ? 'white' : '#888',
+                color: step === 1 ? textColor : '#aaa',
                 cursor: 'pointer',
-                transition: 'color 0.3s',
-                '&:hover': { color: 'white' },
+                '&:hover': { color: textColor },
               }}
               onClick={() => setStep(1)}
             >
@@ -130,10 +196,9 @@ const DonatePage: React.FC = () => {
             <Typography
               variant="subtitle2"
               sx={{
-                color: step === 2 ? 'white' : '#888',
+                color: step === 2 ? textColor : '#aaa',
                 cursor: 'pointer',
-                transition: 'color 0.3s',
-                '&:hover': { color: 'white' },
+                '&:hover': { color: textColor },
               }}
               onClick={() => setStep(2)}
             >
@@ -153,7 +218,6 @@ const DonatePage: React.FC = () => {
             backgroundColor: 'rgba(255,255,255,0.1)',
             '& .MuiLinearProgress-bar': {
               backgroundColor: '#0070BA',
-              transition: 'width 0.5s ease-in-out',
             },
           }}
         />
@@ -169,8 +233,8 @@ const DonatePage: React.FC = () => {
             borderRadius: '50%',
             objectFit: 'cover',
             mb: 2,
-            border: '3px solid white',
-            boxShadow: '0 0 15px rgba(255,255,255,0.3)',
+            border: `3px solid ${textColor}`,
+            boxShadow: '0 0 15px rgba(0,0,0,0.5)',
           }}
         />
 
@@ -178,27 +242,11 @@ const DonatePage: React.FC = () => {
           Support {info.artist.name}
         </Typography>
 
-        {/* Step Content Container */}
-        <Box
-          sx={{
-            position: 'relative',
-            height: 'auto',
-            minHeight: 230,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 2,
-          }}
-        >
-          {/* Step 1 */}
+        {/* Step Content */}
+        <Box sx={{ minHeight: 230, position: 'relative', mb: 2 }}>
+          {/* STEP 1 */}
           <Fade in={step === 1} timeout={400} unmountOnExit>
-            <Box
-              sx={{
-                position: 'absolute',
-                width: '100%',
-                transition: 'opacity 0.4s ease',
-              }}
-            >
+            <Box sx={{ position: 'absolute', width: '100%' }}>
               <TextField
                 multiline
                 rows={rows}
@@ -207,10 +255,9 @@ const DonatePage: React.FC = () => {
                 value={message}
                 onChange={handleMessageChange}
                 sx={{
-                  backgroundColor: 'white',
+                  backgroundColor: '#fff',
                   borderRadius: 2,
-                  mt: 1,
-                  textarea: { fontSize: '1rem', lineHeight: 1.4 },
+                  '& textarea': { fontSize: '1rem' },
                 }}
               />
 
@@ -219,13 +266,10 @@ const DonatePage: React.FC = () => {
                 onClick={() => setStep(2)}
                 fullWidth
                 sx={{
-                  backgroundColor: '#0070BA',
-                  color: 'white',
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  py: 1.4,
+                  background: textColor === '#fff' ? '#0070BA' : '#005f96',
                   mt: 3,
-                  '&:hover': { backgroundColor: '#005c99' },
+                  py: 1.4,
+                  fontWeight: 600,
                 }}
               >
                 Continue
@@ -233,32 +277,19 @@ const DonatePage: React.FC = () => {
             </Box>
           </Fade>
 
-          {/* Step 2 */}
+          {/* STEP 2 */}
           <Fade in={step === 2} timeout={400} unmountOnExit>
-            <Box
-              sx={{
-                position: 'absolute',
-                width: '100%',
-                transition: 'opacity 0.4s ease',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  mb: 3,
-                }}
-              >
+            <Box sx={{ position: 'absolute', width: '100%' }}>
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                 <TextField
                   type="number"
                   label="Amount"
+                  fullWidth
                   variant="outlined"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  fullWidth
                   InputProps={{
-                    sx: { backgroundColor: 'white', borderRadius: 1 },
+                    sx: { backgroundColor: '#fff', borderRadius: 1 },
                     startAdornment: (
                       <InputAdornment position="start">
                         {currency === 'USD'
@@ -269,17 +300,15 @@ const DonatePage: React.FC = () => {
                       </InputAdornment>
                     ),
                   }}
-                  inputProps={{ min: 0 }}
                 />
 
                 <Select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   sx={{
-                    backgroundColor: 'white',
+                    backgroundColor: '#fff',
                     borderRadius: 1,
                     minWidth: 80,
-                    height: '56px',
                   }}
                 >
                   <MenuItem value="USD">USD</MenuItem>
@@ -296,11 +325,8 @@ const DonatePage: React.FC = () => {
                 disabled={loading || !amount || parseFloat(amount) <= 0}
                 sx={{
                   backgroundColor: '#0070BA',
-                  color: 'white',
-                  fontWeight: 700,
-                  borderRadius: 2,
                   py: 1.4,
-                  '&:hover': { backgroundColor: '#005c99' },
+                  fontWeight: 700,
                 }}
               >
                 {loading ? 'PROCESSING...' : 'DONATE WITH PAYPAL'}
@@ -310,9 +336,8 @@ const DonatePage: React.FC = () => {
                 onClick={() => setStep(1)}
                 sx={{
                   mt: 2,
-                  color: 'white',
+                  color: textColor,
                   textDecoration: 'underline',
-                  textTransform: 'none',
                 }}
               >
                 ← Back to message
@@ -321,7 +346,7 @@ const DonatePage: React.FC = () => {
           </Fade>
         </Box>
 
-        {/* PayPal banner (always visible) */}
+        {/* PayPal banner */}
         <Box
           component="img"
           src="/static/paypal-banner.jpg"
@@ -332,7 +357,6 @@ const DonatePage: React.FC = () => {
             borderRadius: 2,
             backgroundColor: '#fff',
             padding: 1,
-            boxShadow: '0 0 8px rgba(255,255,255,0.3)',
           }}
         />
       </Paper>

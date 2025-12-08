@@ -37,7 +37,7 @@ export default function DonatePage() {
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
 
-  // Fully solid UI colors (no transparency)
+  // Panel uses solid opposite color
   const [panelColor, setPanelColor] = useState('#222');
   const [textColor, setTextColor] = useState('#fff');
 
@@ -45,7 +45,7 @@ export default function DonatePage() {
   const bucketUrl = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // ----------------------------------------------------
-  // Load artist + theme extracted via ColorEngine
+  // Load artist + color palette
   // ----------------------------------------------------
   useEffect(() => {
     localStorage.removeItem('sdr-donation-text');
@@ -58,13 +58,14 @@ export default function DonatePage() {
       const encoded = encodeURI(rel);
       const imgUrl = `${bucketUrl}/${encoded}`;
 
-      // Centralized palette + text color
       const palette = await ColorEngineInstance.extractPalette(imgUrl);
 
       if (palette) {
-        // Use SOLID opposite color for donation card background
+        // Use SOLID panel background (opposite of gradient)
         setPanelColor(palette.oppositeSolid);
-        setTextColor(palette.textColor);
+
+        // IMPORTANT: Use solidTextColor (not textColor)
+        setTextColor(palette.solidTextColor);
       }
     })();
   }, []);
@@ -102,9 +103,6 @@ export default function DonatePage() {
     }
   };
 
-  // ----------------------------------------------------
-  // Dynamic textarea sizing
-  // ----------------------------------------------------
   const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
     setMessage(text);
@@ -129,19 +127,20 @@ export default function DonatePage() {
           padding: 4,
           borderRadius: 4,
           textAlign: 'center',
-          backgroundColor: panelColor, // SOLID color only
+          backgroundColor: panelColor,
           color: textColor,
           boxShadow: '0 0 30px rgba(0,0,0,0.4)',
           transition: '0.25s ease all',
         }}
       >
-        {/* --------------------------- STEP NAV --------------------------- */}
+        {/* STEP NAV */}
         <Box
           sx={{
             mb: 3,
             display: 'flex',
             justifyContent: 'space-between',
             userSelect: 'none',
+            color: textColor,
           }}
         >
           <Tooltip title="Write your message">
@@ -175,7 +174,7 @@ export default function DonatePage() {
           </Tooltip>
         </Box>
 
-        {/* --------------------------- PROGRESS --------------------------- */}
+        {/* PROGRESS BAR */}
         <LinearProgress
           variant="determinate"
           value={step === 1 ? 50 : 100}
@@ -188,7 +187,7 @@ export default function DonatePage() {
           }}
         />
 
-        {/* --------------------------- ARTIST PHOTO --------------------------- */}
+        {/* ARTIST PHOTO */}
         <Box
           component="img"
           src={photoUrl}
@@ -208,7 +207,7 @@ export default function DonatePage() {
           Support {info.artist.name}
         </Typography>
 
-        {/* --------------------------- CONTENT --------------------------- */}
+        {/* CONTENT */}
         <Box sx={{ minHeight: 230, position: 'relative', mb: 2 }}>
           {/* STEP 1 */}
           <Fade in={step === 1} timeout={400} unmountOnExit>
@@ -310,7 +309,7 @@ export default function DonatePage() {
           </Fade>
         </Box>
 
-        {/* --------------------------- PAYPAL LOGO --------------------------- */}
+        {/* PAYPAL BANNER */}
         <Box
           component="img"
           src="/static/paypal-banner.jpg"

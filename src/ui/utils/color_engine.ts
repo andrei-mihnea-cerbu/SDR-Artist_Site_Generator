@@ -5,14 +5,14 @@ export interface ExtractedPalette {
   mid: string;
   vibrant: string;
   gradient: string;
-  textColor: string;
-  oppositeSolid: string;
+  textColor: string; // text color for gradient areas
+  oppositeSolid: string; // solid panel background
+  solidTextColor: string; // text color for solid panel
 }
-
 
 class ColorEngine {
   private static instance: ColorEngine;
-  private cache = new Map<string, any>();
+  private cache = new Map<string, ExtractedPalette>();
 
   static getInstance() {
     if (!ColorEngine.instance) {
@@ -23,16 +23,16 @@ class ColorEngine {
 
   private constructor() {}
 
-  // --------------------------
+  // -----------------------------------------------------
   // Helpers
-  // --------------------------
+  // -----------------------------------------------------
 
   private rgb(r: number, g: number, b: number) {
     return `rgb(${r},${g},${b})`;
   }
 
   private brightness(r: number, g: number, b: number) {
-    return (r * 0.299 + g * 0.587 + b * 0.114);
+    return r * 0.299 + g * 0.587 + b * 0.114;
   }
 
   private saturation(r: number, g: number, b: number) {
@@ -41,29 +41,37 @@ class ColorEngine {
     return max === 0 ? 0 : (max - min) / max;
   }
 
-  private getContrast(hexOrRgb: string) {
-    let r = 0, g = 0, b = 0;
+  private getContrastForRGB(r: number, g: number, b: number): string {
+    const luminance = this.brightness(r, g, b);
+    return luminance > 140 ? '#000' : '#fff';
+  }
 
-    if (hexOrRgb.startsWith("rgb")) {
+  private getContrast(hexOrRgb: string): string {
+    let r = 0,
+      g = 0,
+      b = 0;
+
+    if (hexOrRgb.startsWith('rgb')) {
       const nums = hexOrRgb
-        .replace(/[^\d,]/g, "")
-        .split(",")
-        .map(n => parseInt(n.trim(), 10));
+        .replace(/[^\d,]/g, '')
+        .split(',')
+        .map((n) => parseInt(n.trim(), 10));
+
       [r, g, b] = nums;
     } else {
-      const hex = hexOrRgb.replace("#", "");
+      const hex = hexOrRgb.replace('#', '');
       r = parseInt(hex.substring(0, 2), 16);
       g = parseInt(hex.substring(2, 4), 16);
       b = parseInt(hex.substring(4, 6), 16);
     }
 
-    const luminance = this.brightness(r, g, b) / 255;
-    return luminance > 0.55 ? "#000" : "#fff";
+    return this.getContrastForRGB(r, g, b);
   }
 
-  // --------------------------
-  // Proxy-safe fetch → Blob URL
-  // --------------------------
+  // -----------------------------------------------------
+  // Image loading & proxy-safe fetch
+  // -----------------------------------------------------
+
   private async fetchBlobUrl(url: string): Promise<string | null> {
     try {
       const proxied = `/api/proxy-image?url=${encodeURIComponent(url)}`;
@@ -77,9 +85,6 @@ class ColorEngine {
     }
   }
 
-  // --------------------------
-  // Load image into HTMLImageElement
-  // --------------------------
   private loadImage(url: string): Promise<HTMLImageElement | null> {
     return new Promise((resolve) => {
       const img = new Image();
@@ -89,48 +94,48 @@ class ColorEngine {
     });
   }
 
-  // --------------------------
+  // -----------------------------------------------------
   // Solid opposite color generator
-  // --------------------------
-  private generateOppositeSolid(bg: { r: number; g: number; b: number }) {
-    const bright = this.brightness(bg.r, bg.g, bg.b);
+  // -----------------------------------------------------
 
-    // Dark background → light panel
-    if (bright < 130) {
-      return "#f4f4f4"; // clean light
+  private generateOppositeSolid(avg: { r: number; g: number; b: number }) {
+    const bright = this.brightness(avg.r, avg.g, avg.b);
+
+    // Dark image → bright solid card
+    if (bright < 130) return '#f4f4f4';
+
+    // Bright image → dark solid card
+    return '#1a1a1a';
+  }
+
+  // -----------------------------------------------------
+  // MAIN ENTRY: Extract palette with full typing
+  // -----------------------------------------------------
+
+  async extractPalette(imageUrl: string): Promise<ExtractedPalette | null> {
+    if (this.cache.has(imageUrl)) {
+      return this.cache.get(imageUrl)!;
     }
 
-    // Light background → dark panel
-    return "#1a1a1a";
+    const blobUrl = await this.fetchBlobUrl(imageUrl);
+    if (!blobUrl) return null;
+
+    const img = await this.loadImage(blobUrl);
+    if (!img) return null;
+
+    const palette = this.processImage(img);
+
+    this.cache.set(imageUrl, palette);
+    return palette;
   }
 
-  // --------------------------
-  // MAIN PALETTE EXTRACTOR
-  // --------------------------
-  async extractPalette(imageUrl: string): Promise<ExtractedPalette | null> {
-  if (this.cache.has(imageUrl)) {
-    return this.cache.get(imageUrl) as ExtractedPalette;
-  }
+  // -----------------------------------------------------
+  // Actual image processing
+  // -----------------------------------------------------
 
-  const blobUrl = await this.fetchBlobUrl(imageUrl);
-  if (!blobUrl) return null;
-
-  const img = await this.loadImage(blobUrl);
-  if (!img) return null;
-
-  const palette = this.processImage(img);
-
-  this.cache.set(imageUrl, palette);
-  return palette;
-}
-
-
-  // --------------------------
-  // Process image to extract colors
-  // --------------------------
-  private processImage(img: HTMLImageElement) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
+  private processImage(img: HTMLImageElement): ExtractedPalette {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
@@ -147,21 +152,22 @@ class ColorEngine {
       const bright = this.brightness(r, g, b);
       const sat = this.saturation(r, g, b);
 
-      if (bright > 220) continue; // too bright/white
-      if (sat < 0.18) continue; // gray, not useful
+      if (bright > 220) continue; // too bright
+      if (sat < 0.18) continue; // too gray
 
       samples.push({ r, g, b });
     }
 
+    // Fallback palette
     if (samples.length === 0) {
-      // Fallback palette
       return {
-        dark: "rgb(20,20,20)",
-        mid: "rgb(80,80,80)",
-        vibrant: "rgb(160,160,160)",
-        gradient: "linear-gradient(135deg,#111,#000)",
-        textColor: "#fff",
-        oppositeSolid: "#f4f4f4",
+        dark: 'rgb(30,30,30)',
+        mid: 'rgb(100,100,100)',
+        vibrant: 'rgb(180,180,180)',
+        gradient: 'linear-gradient(135deg,#111,#555)',
+        textColor: '#fff',
+        oppositeSolid: '#f4f4f4',
+        solidTextColor: '#000',
       };
     }
 
@@ -170,21 +176,20 @@ class ColorEngine {
       (a, b) => this.brightness(a.r, a.g, a.b) - this.brightness(b.r, b.g, b.b)
     );
 
-    // Extract key colors
     const dark = this.rgb(sorted[0].r, sorted[0].g, sorted[0].b);
-
     const midSample = sorted[Math.floor(sorted.length / 2)];
     const mid = this.rgb(midSample.r, midSample.g, midSample.b);
 
     const vibrantSample = sorted[sorted.length - 1];
     const vibrant = this.rgb(vibrantSample.r, vibrantSample.g, vibrantSample.b);
 
-    // Average color (for opposite panel)
+    // Compute average color
     const avg = samples.reduce(
-      (acc, c) => {
-        acc.r += c.r; acc.g += c.g; acc.b += c.b;
-        return acc;
-      },
+      (acc, c) => ({
+        r: acc.r + c.r,
+        g: acc.g + c.g,
+        b: acc.b + c.b,
+      }),
       { r: 0, g: 0, b: 0 }
     );
 
@@ -193,7 +198,7 @@ class ColorEngine {
     avg.b = Math.round(avg.b / samples.length);
 
     const oppositeSolid = this.generateOppositeSolid(avg);
-
+    const solidTextColor = this.getContrast(oppositeSolid);
     const gradient = `linear-gradient(135deg, ${dark} 0%, ${mid} 45%, ${vibrant} 100%)`;
 
     return {
@@ -201,8 +206,9 @@ class ColorEngine {
       mid,
       vibrant,
       gradient,
-      textColor: this.getContrast(mid),
+      textColor: this.getContrast(vibrant),
       oppositeSolid,
+      solidTextColor,
     };
   }
 }

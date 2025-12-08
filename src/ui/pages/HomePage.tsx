@@ -82,18 +82,19 @@ export default function HomePage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
-  // Theme colors
-  const [panelColor, setPanelColor] = useState('rgba(255,255,255,1)');
+  // Theme colors (solid panel + button gradient + solid text)
+  const [panelColor, setPanelColor] = useState('#fff');
   const [buttonGradient, setButtonGradient] = useState(
-    'linear-gradient(90deg,#ffffff,#eeeeee)'
+    'linear-gradient(90deg,#fff,#eee)'
   );
-  const [textColor, setTextColor] = useState('#000');
+  const [textColor, setTextColor] = useState('#000'); // used INSIDE panel (solid)
+  const [bgTextColor, setBgTextColor] = useState('#fff'); // used in GRADIENT wrapper
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // -------------------------------------------------
-  // LOAD DATA + AUTO COLOR EXTRACTION
+  // LOAD DATA + COLOR EXTRACTION
   // -------------------------------------------------
 
   useEffect(() => {
@@ -117,21 +118,31 @@ export default function HomePage() {
           const palette = await ColorEngineInstance.extractPalette(full);
 
           if (palette) {
-            const { vibrant, dark, textColor, oppositeSolid } = palette;
+            const {
+              vibrant,
+              dark,
+              oppositeSolid,
+              solidTextColor,
+              textColor: gradientTextColor,
+            } = palette;
 
-            // Panel uses opposite solid background
+            // Panel background (light/dark opposite)
             setPanelColor(oppositeSolid);
 
-            // Buttons use gradient based on palette
+            // Buttons → gradient from vibrant to dark
             setButtonGradient(
               `linear-gradient(90deg, ${vibrant}dd, ${dark}ee)`
             );
 
-            setTextColor(textColor);
+            // Solid text color for panel elements
+            setTextColor(solidTextColor);
+
+            // Text color for gradient wrapper
+            setBgTextColor(gradientTextColor);
           }
         }
 
-        // ------- Group Socials -------
+        // Group socials
         const labelMap: Record<string, string> = {};
         labels.forEach((l) => (labelMap[l.id] = l.name));
 
@@ -180,21 +191,21 @@ export default function HomePage() {
     );
 
   // -------------------------------------------------
-  // RENDER PAGE
+  // PAGE RENDER
   // -------------------------------------------------
 
   return (
     <AnimatedGradientBackground
       imageUrl={banner ?? ''}
       style={{
-        color: textColor,
+        color: bgTextColor,
         padding: '20px',
         display: 'flex',
         justifyContent: 'center',
       }}
     >
       <Box sx={{ width: '100%', maxWidth: 650 }}>
-        {/* MAIN PANEL (solid color, includes title & image) */}
+        {/* MAIN PANEL */}
         <Box
           sx={{
             background: panelColor,
@@ -202,9 +213,10 @@ export default function HomePage() {
             p: 3,
             boxShadow: '0 0 25px rgba(0,0,0,0.35)',
             textAlign: 'center',
+            color: textColor,
           }}
         >
-          {/* ARTIST NAME */}
+          {/* NAME */}
           <Typography
             variant="h3"
             sx={{
@@ -216,7 +228,7 @@ export default function HomePage() {
             {artist?.name}
           </Typography>
 
-          {/* BANNER IMAGE INSIDE PANEL */}
+          {/* PHOTO */}
           {banner && (
             <Box
               component="img"
@@ -231,7 +243,7 @@ export default function HomePage() {
             />
           )}
 
-          {/* SOCIAL GROUPS */}
+          {/* SOCIAL SECTIONS */}
           {Object.entries(groups).map(([group, items]) => (
             <Box key={group} sx={{ mb: 4 }}>
               <Typography

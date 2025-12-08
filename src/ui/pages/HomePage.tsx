@@ -8,7 +8,6 @@ import {
   SvgIcon,
 } from '@mui/material';
 import axios from 'axios';
-import ColorThief from 'color-thief-browser';
 
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -19,7 +18,9 @@ import * as simpleIcons from 'simple-icons';
 import { Artist } from '../interfaces/artist';
 import { Social, SocialLabel } from '../interfaces/social';
 import { InfoResponse } from '../interfaces/info';
+
 import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
+import { ColorEngineInstance } from '../utils/color_engine';
 
 // -------------------------------------------------
 // UTILITIES
@@ -36,29 +37,6 @@ const createSimpleIcon = (icon: any) => {
       <path d={icon.path} />
     </SvgIcon>
   );
-};
-
-const getContrast = (hexOrRgb: string) => {
-  let hex = hexOrRgb;
-
-  if (hex.startsWith('rgb')) {
-    const nums = hex
-      .replace(/[^\d,]/g, '')
-      .split(',')
-      .map((n) => parseInt(n.trim(), 10));
-    const [r, g, b] = nums;
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.55 ? '#000' : '#fff';
-  }
-
-  // HEX fallback
-  hex = hex.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55 ? '#000' : '#fff';
 };
 
 // -------------------------------------------------
@@ -115,17 +93,16 @@ export default function HomePage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
+  // Theme colors
   const [panelColor, setPanelColor] = useState('rgba(255,255,255,0.12)');
-  const [buttonGradient, setButtonGradient] = useState(
-    'linear-gradient(90deg,#ffffff22,#ffffff44)'
-  );
+  const [buttonGradient, setButtonGradient] = useState('linear-gradient(90deg,#ffffff22,#ffffff44)');
   const [textColor, setTextColor] = useState('#fff');
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // -------------------------------------------------
-  // LOAD DATA + AUTO COLOR EXTRACTION
+  // LOAD DATA + AUTO COLOR EXTRACTION (via ColorEngine)
   // -------------------------------------------------
 
   useEffect(() => {
@@ -146,30 +123,18 @@ export default function HomePage() {
           const full = `${bucket}/${rel}`;
           setBanner(full);
 
-          // Extract dominant + palette using color-thief-browser
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = full;
+          // Get palette from centralized ColorEngine
+          const palette = await ColorEngineInstance.extractPalette(full);
 
-          img.onload = () => {
-            const thief = new ColorThief();
+          if (palette) {
+            const { vibrant, dark, mid, textColor } = palette;
 
-            const dominant = thief.getColor(img); // [r,g,b]
-            const palette = thief.getPalette(img, 6) || []; // [[r,g,b],...]
-
-            const rgb = (arr: number[]) => `rgb(${arr[0]},${arr[1]},${arr[2]})`;
-
-            const vibrant = rgb(palette[0] || dominant);
-            const darkVibrant = rgb(palette[1] || dominant);
-            const muted = rgb(palette[2] || [40, 40, 40]);
-
-            setPanelColor(`${muted}aa`);
+            setPanelColor(`${mid}aa`);
             setButtonGradient(
-              `linear-gradient(90deg, ${vibrant}aa, ${darkVibrant}dd)`
+              `linear-gradient(90deg, ${vibrant}aa, ${dark}dd)`
             );
-
-            setTextColor(getContrast(vibrant));
-          };
+            setTextColor(textColor);
+          }
         }
 
         // ------- Group Socials -------

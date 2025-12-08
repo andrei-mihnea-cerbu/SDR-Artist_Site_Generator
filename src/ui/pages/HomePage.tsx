@@ -95,6 +95,8 @@ const fadeIn = {
   animation: 'fadeUp .8s ease forwards',
 };
 
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+
 // COMPONENT --------------------------------------------------
 const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,7 @@ const HomePage: React.FC = () => {
       try {
         const [infoRes, labelsRes] = await Promise.all([
           axios.get<InfoResponse>('/info'),
-          axios.get<SocialLabel[]>('/socials/labels'),
+          axios.get<SocialLabel[]>(`${VITE_API_URL}/socials/labels`),
         ]);
 
         const { artist, description, socials } = infoRes.data;

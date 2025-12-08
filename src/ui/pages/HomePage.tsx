@@ -47,7 +47,6 @@ const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = (s.originalUrl || s.url).toLowerCase();
 
-  // SPECIFIC MUSIC APPS
   if (name.includes('spotify')) return createSimpleIcon(simpleIcons.siSpotify);
   if (name.includes('apple') || url.includes('music.apple'))
     return createSimpleIcon(simpleIcons.siApple);
@@ -55,30 +54,24 @@ const getPlatformIcon = (s: Social) => {
     return createSimpleIcon(simpleIcons.siYoutube);
   if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
 
-  // GENERIC MUSIC
   if (name.includes('music') || url.includes('/music'))
     return <MusicNoteIcon />;
 
-  // SOCIAL
   if (name.includes('instagram'))
     return createSimpleIcon(simpleIcons.siInstagram);
   if (name.includes('facebook'))
     return createSimpleIcon(simpleIcons.siFacebook);
 
-  // SUPPORT
   if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
   if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
   if (name.includes('gofundme'))
     return createSimpleIcon(simpleIcons.siGofundme);
 
-  // WEBSITE
   if (name.includes('website') || name.includes('site'))
     return <LanguageIcon />;
 
-  // MERCH
   if (name.includes('merch')) return <StorefrontIcon />;
 
-  // FALLBACK
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
@@ -95,14 +88,16 @@ export default function HomePage() {
 
   // Theme colors
   const [panelColor, setPanelColor] = useState('rgba(255,255,255,0.12)');
-  const [buttonGradient, setButtonGradient] = useState('linear-gradient(90deg,#ffffff22,#ffffff44)');
+  const [buttonGradient, setButtonGradient] = useState(
+    'linear-gradient(90deg,#ffffff22,#ffffff44)'
+  );
   const [textColor, setTextColor] = useState('#fff');
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // -------------------------------------------------
-  // LOAD DATA + AUTO COLOR EXTRACTION (via ColorEngine)
+  // LOAD DATA + AUTO COLOR EXTRACTION
   // -------------------------------------------------
 
   useEffect(() => {
@@ -115,15 +110,14 @@ export default function HomePage() {
 
         const { artist, description, socials } = infoRes.data;
         const labels = labelsRes.data;
-
         setArtist(artist);
 
+        // --- Extract Theme Colors ---
         if (description.imageGallery.length > 0) {
           const rel = encodeURI(description.imageGallery[0]);
           const full = `${bucket}/${rel}`;
           setBanner(full);
 
-          // Get palette from centralized ColorEngine
           const palette = await ColorEngineInstance.extractPalette(full);
 
           if (palette) {
@@ -137,7 +131,7 @@ export default function HomePage() {
           }
         }
 
-        // ------- Group Socials -------
+        // --- Group Socials ---
         const labelMap: Record<string, string> = {};
         labels.forEach((l) => (labelMap[l.id] = l.name));
 

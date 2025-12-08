@@ -35,21 +35,21 @@ class ColorEngine {
       g = 0,
       b = 0;
 
-    if (hexOrRgb.startsWith("rgb")) {
+    if (hexOrRgb.startsWith('rgb')) {
       const nums = hexOrRgb
-        .replace(/[^\d,]/g, "")
-        .split(",")
+        .replace(/[^\d,]/g, '')
+        .split(',')
         .map((n) => parseInt(n));
       [r, g, b] = nums;
     } else {
-      const hex = hexOrRgb.replace("#", "");
+      const hex = hexOrRgb.replace('#', '');
       r = parseInt(hex.substring(0, 2), 16);
       g = parseInt(hex.substring(2, 4), 16);
       b = parseInt(hex.substring(4, 6), 16);
     }
 
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.55 ? "#000" : "#fff";
+    return luminance > 0.55 ? '#000' : '#fff';
   }
 
   // --------------------------
@@ -107,8 +107,8 @@ class ColorEngine {
   // Extract dark, vibrant, muted colors
   // --------------------------
   private processImage(img: HTMLImageElement) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
@@ -133,18 +133,16 @@ class ColorEngine {
 
     if (samples.length === 0) {
       return {
-        dark: "rgb(20,20,20)",
-        mid: "rgb(80,80,80)",
-        vibrant: "rgb(160,160,160)",
-        gradient: "linear-gradient(135deg,#111,#000)",
-        textColor: "#fff",
+        dark: 'rgb(20,20,20)',
+        mid: 'rgb(80,80,80)',
+        vibrant: 'rgb(160,160,160)',
+        gradient: 'linear-gradient(135deg,#111,#000)',
+        textColor: '#fff',
       };
     }
 
     const sorted = samples.sort(
-      (a, b) =>
-        this.brightness(a.r, a.g, a.b) -
-        this.brightness(b.r, b.g, b.b)
+      (a, b) => this.brightness(a.r, a.g, a.b) - this.brightness(b.r, b.g, b.b)
     );
 
     const dark = this.rgb(sorted[0].r, sorted[0].g, sorted[0].b);

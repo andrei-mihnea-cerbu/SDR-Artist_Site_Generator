@@ -37,7 +37,7 @@ export default function DonatePage() {
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
 
-  // Theme
+  // Auto-themed UI colors
   const [panelColor, setPanelColor] = useState('rgba(0,0,0,0.8)');
   const [textColor, setTextColor] = useState('#fff');
 
@@ -45,7 +45,7 @@ export default function DonatePage() {
   const bucketUrl = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
   // ----------------------------------------------------
-  // Load artist + palette
+  // Load artist + theme extracted via ColorEngine
   // ----------------------------------------------------
   useEffect(() => {
     localStorage.removeItem('sdr-donation-text');
@@ -58,8 +58,11 @@ export default function DonatePage() {
       const encoded = encodeURI(rel);
       const imgUrl = `${bucketUrl}/${encoded}`;
 
+      // Centralized palette + text color
       const palette = await ColorEngineInstance.extractPalette(imgUrl);
+
       if (palette) {
+        // Slight transparency for the panel glass
         setPanelColor(`${palette.mid}dd`);
         setTextColor(palette.textColor);
       }
@@ -82,14 +85,18 @@ export default function DonatePage() {
         currency,
       });
 
-      const approvalLink = res.data.links?.find((l: any) => l.rel === 'approve')
-        ?.href;
+      const approvalLink = res.data.links?.find(
+        (l: any) => l.rel === 'approve'
+      )?.href;
 
       if (approvalLink) window.location.href = approvalLink;
       else throw new Error('Approval link not found');
     } catch (err) {
       console.error(err);
-      setNotification('Could not initiate donation. Please try again.', 'error');
+      setNotification(
+        'Could not initiate donation. Please try again.',
+        'error'
+      );
       setLoading(false);
       document.body.style.cursor = 'default';
     }
@@ -124,7 +131,7 @@ export default function DonatePage() {
           textAlign: 'center',
           backgroundColor: panelColor,
           color: textColor,
-          transition: '0.25s ease background-color',
+          transition: '0.25s ease background-color, 0.25s ease color',
         }}
       >
         {/* --------------------------- STEP NAV --------------------------- */}
@@ -250,8 +257,8 @@ export default function DonatePage() {
                         {currency === 'USD'
                           ? '$'
                           : currency === 'EUR'
-                          ? '€'
-                          : '£'}
+                            ? '€'
+                            : '£'}
                       </InputAdornment>
                     ),
                   }}
@@ -300,7 +307,7 @@ export default function DonatePage() {
           </Fade>
         </Box>
 
-        {/* PAYPAL LOGO */}
+        {/* --------------------------- PAYPAL LOGO --------------------------- */}
         <Box
           component="img"
           src="/static/paypal-banner.jpg"

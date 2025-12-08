@@ -1,7 +1,7 @@
 // src/components/AnimatedGradientBackground.tsx
 
-import React, { useEffect, useState } from "react";
-import { ColorEngineInstance } from "../utils/color_engine";
+import React, { useEffect, useState } from 'react';
+import { ColorEngineInstance } from '../utils/color_engine';
 
 interface AnimatedGradientBackgroundProps {
   imageUrl: string;
@@ -14,7 +14,7 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
   children,
   style,
 }) => {
-  const [gradient, setGradient] = useState("linear-gradient(135deg,#111,#000)");
+  const [gradient, setGradient] = useState('linear-gradient(135deg,#111,#000)');
 
   useEffect(() => {
     let revoked: string | null = null;
@@ -38,17 +38,17 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
   return (
     <div
       style={{
-        minHeight: "100vh",
-        width: "100%",
+        minHeight: '100vh',
+        width: '100%',
         backgroundImage: gradient,
-        backgroundSize: "400% 400%",
-        backgroundPosition: "0% 50%",
-        animation: "gradientFlow 16s ease infinite",
-        transition: "background-image 1.2s ease-in-out",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        color: "white",
+        backgroundSize: '400% 400%',
+        backgroundPosition: '0% 50%',
+        animation: 'gradientFlow 16s ease infinite',
+        transition: 'background-image 1.2s ease-in-out',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: 'white',
         ...style,
       }}
     >

@@ -1,126 +1,136 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
   CircularProgress,
   Button,
   Stack,
-  useMediaQuery,
-  Fade,
   SvgIcon,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import axios from 'axios';
+} from "@mui/material";
+import axios from "axios";
+import { Vibrant } from "node-vibrant/node";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
+import LanguageIcon from "@mui/icons-material/Language";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 
-// Interfaces
-import { Artist } from '../interfaces/artist';
-import { Description } from '../interfaces/description';
-import { Social, SocialLabel } from '../interfaces/social';
+import * as simpleIcons from "simple-icons";
 
-// SIMPLE ICONS
-import * as simpleIcons from 'simple-icons';
+import { Artist } from "../interfaces/artist";
+import { Social, SocialLabel } from "../interfaces/social";
+import { Description } from "../interfaces/description";
 
-// Types
-interface InfoResponse {
-  artist: Artist;
-  description: Description;
-  socials: Social[];
-}
+// ---------------- Utilities ----------------------
 
-interface GroupedSocials {
-  [groupName: string]: Social[];
-}
-
-// Animations
-const fadeIn = {
-  opacity: 0,
-  transform: 'translateY(20px)',
-  animation: 'fadeUp .8s ease forwards',
-};
-
-// Convert SimpleIcon to MUI SvgIcon
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
   return (
     <SvgIcon
       component="svg"
       viewBox="0 0 24 24"
-      sx={{ width: 24, height: 24, fill: `#${icon.hex}` }}
+      sx={{ width: 22, height: 22, fill: `#${icon.hex}` }}
     >
       <path d={icon.path} />
     </SvgIcon>
   );
 };
 
-// ICON DETECTION — best possible matching
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
+const getContrast = (hex: string) => {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substr(0, 2), 16);
+  const g = parseInt(c.substr(2, 2), 16);
+  const b = parseInt(c.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? "#000" : "#fff";
+};
+
+// ---------------- Icon Mapper ----------------------
 
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = (s.originalUrl || s.url).toLowerCase();
 
-  // SPECIFIC MUSIC PLATFORMS
-  if (name.includes('spotify')) return createSimpleIcon(simpleIcons.siSpotify);
+  // MUSIC — specific
+  if (name.includes("spotify")) return createSimpleIcon(simpleIcons.siSpotify);
 
-  // Apple Music does NOT exist in Simple Icons → use generic Apple
-  if (name.includes('apple') || url.includes('music.apple'))
+  if (name.includes("apple") || url.includes("music.apple"))
     return createSimpleIcon(simpleIcons.siApple);
 
-  // YouTube
-  if (name.includes('youtube') || url.includes('youtu'))
+  if (name.includes("youtube") || url.includes("youtu"))
     return createSimpleIcon(simpleIcons.siYoutube);
 
-  // TikTok
-  if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
+  if (name.includes("tiktok"))
+    return createSimpleIcon(simpleIcons.siTiktok);
 
-  // GENERIC MUSIC (Amazon Music, Deezer, Pandora, Tidal, etc.)
+  // GENERIC MUSIC
   if (
-    name.includes('music') ||
-    url.includes('music.') ||
-    url.includes('/music')
+    name.includes("music") ||
+    url.includes("music.") ||
+    url.includes("/music")
   ) {
-    return <MusicNoteIcon sx={{ width: 24, height: 24 }} />;
+    return <MusicNoteIcon />;
   }
 
   // SOCIAL MEDIA
-  if (name.includes('instagram'))
+  if (name.includes("instagram"))
     return createSimpleIcon(simpleIcons.siInstagram);
 
-  if (name.includes('facebook'))
+  if (name.includes("facebook"))
     return createSimpleIcon(simpleIcons.siFacebook);
 
-  // SUPPORT / DONATION
-  if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
+  // SUPPORT
+  if (name.includes("patreon"))
+    return createSimpleIcon(simpleIcons.siPatreon);
 
-  if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
+  if (name.includes("paypal"))
+    return createSimpleIcon(simpleIcons.siPaypal);
 
-  if (name.includes('gofundme'))
+  if (name.includes("gofundme"))
     return createSimpleIcon(simpleIcons.siGofundme);
 
-  // WEBSITE / OTHER (generic internet icon)
+  // WEBSITE
+  if (name.includes("website") || name.includes("site"))
+    return <LanguageIcon />;
+
+  // MERCH
+  if (name.includes("merch"))
+    return <StorefrontIcon />;
+
+  // FALLBACK
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
-// COMPONENT ----------------------------------------------------------------
+// ---------------- Component ------------------------
 
-const HomePage: React.FC = () => {
+interface InfoResponse {
+  artist: Artist;
+  description: Description;
+  socials: Social[];
+}
+
+export default function HomePage() {
   const [loading, setLoading] = useState(true);
+
   const [artist, setArtist] = useState<Artist | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
-  const [groups, setGroups] = useState<GroupedSocials>({});
+  const [groups, setGroups] = useState<Record<string, Social[]>>({});
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [bgGradient, setBgGradient] = useState<string>(
+    "linear-gradient(135deg, #111, #000)"
+  );
+  const [panelColor, setPanelColor] = useState("rgba(255,255,255,0.12)");
+  const [buttonGradient, setButtonGradient] = useState(
+    "linear-gradient(90deg, #ffffff22, #ffffff44)"
+  );
+  const [textColor, setTextColor] = useState("#fff");
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
-  // Fetch info + social labels
   useEffect(() => {
-    const fetchAll = async () => {
+    const load = async () => {
       try {
         const [infoRes, labelsRes] = await Promise.all([
-          axios.get<InfoResponse>(`/info`),
+          axios.get<InfoResponse>(`${apiUrl}/info`),
           axios.get<SocialLabel[]>(`${apiUrl}/socials/labels`),
         ]);
 
@@ -130,200 +140,170 @@ const HomePage: React.FC = () => {
         setArtist(artist);
 
         // Banner
-        if (description.imageGallery?.length > 0) {
-          const path = encodeURI(description.imageGallery[0]);
-          setBanner(`${bucket}/${path}`);
+        if (description.imageGallery.length > 0) {
+          const rel = encodeURI(description.imageGallery[0]);
+          const full = `${bucket}/${rel}`;
+          setBanner(full);
+
+          const palette = await Vibrant.from(full).getPalette();
+          const vibrant = palette.Vibrant?.hex || "#663399";
+          const darkVibrant = palette.DarkVibrant?.hex || "#331a66";
+          const muted = palette.Muted?.hex || "#222";
+
+          setBgGradient(
+            `linear-gradient(135deg, ${darkVibrant}dd, ${muted}cc, #000)`
+          );
+
+          setPanelColor(`${muted}aa`);
+
+          setButtonGradient(
+            `linear-gradient(90deg, ${vibrant}aa, ${darkVibrant}dd)`
+          );
+
+          setTextColor(getContrast(vibrant));
         }
 
-        // Map labels
         const labelMap: Record<string, string> = {};
         labels.forEach((l) => (labelMap[l.id] = l.name));
 
-        // Group socials
-        const grouped: GroupedSocials = {};
+        const grouped: Record<string, Social[]> = {};
 
         socials.forEach((s) => {
           if (s.socialLabelsList.length === 0) {
-            if (!grouped['Other']) grouped['Other'] = [];
-            grouped['Other'].push(s);
+            (grouped["Other"] ||= []).push(s);
           } else {
-            s.socialLabelsList.forEach((labelId) => {
-              const group = labelMap[labelId] || 'Other';
-              if (!grouped[group]) grouped[group] = [];
-              grouped[group].push(s);
+            s.socialLabelsList.forEach((id) => {
+              (grouped[labelMap[id] || "Other"] ||= []).push(s);
             });
           }
         });
 
         setGroups(grouped);
       } catch (err) {
-        console.error('Failed to load homepage:', err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAll();
+    load();
   }, []);
 
-  // LOADING
-  if (loading) {
+  if (loading)
     return (
       <Box
         sx={{
-          height: '100vh',
-          background: '#000',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          color: 'white',
+          height: "100vh",
+          background: "#000",
+          color: "#fff",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
         <CircularProgress color="inherit" />
       </Box>
     );
-  }
-
-  // PAGE ------------------------------------------------------------------
 
   return (
-    <>
-      <style>
-        {`
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}
-      </style>
-
+    <Box
+      sx={{
+        minHeight: "100vh",
+        width: "100%",
+        background: bgGradient,
+        color: textColor,
+        p: 3,
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
       <Box
         sx={{
-          height: '100vh',
-          width: '100%',
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          background: 'linear-gradient(135deg, #0f0f1f, #1a1a33, #0e0e19)',
-          color: 'white',
-          overflow: 'hidden',
+          width: "100%",
+          maxWidth: 650,
+          mx: "auto",
+          textAlign: "center",
         }}
       >
-        {/* LEFT PANEL ------------------------------------------------------- */}
+        {/* ARTIST NAME */}
+        <Typography
+          variant="h3"
+          sx={{ fontWeight: "bold", mb: 2 }}
+        >
+          {artist?.name}
+        </Typography>
+
+        {/* BANNER */}
+        {banner && (
+          <Box
+            component="img"
+            src={banner}
+            alt="banner"
+            sx={{
+              width: "100%",
+              borderRadius: 3,
+              mb: 4,
+            }}
+          />
+        )}
+
+        {/* PANEL */}
         <Box
           sx={{
-            flex: 1,
-            p: 4,
-            mt: 4,
-            mb: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
-            overflowY: 'auto',
+            backdropFilter: "blur(12px)",
+            borderRadius: 4,
+            p: 3,
+            background: panelColor,
+            boxShadow: "0 0 40px #0007",
           }}
         >
-          {/* Artist Name */}
-          <Box sx={{ ...fadeIn, animationDelay: '0.1s' }}>
-            <Typography
-              variant={isMobile ? 'h4' : 'h3'}
-              sx={{
-                fontWeight: 'bold',
-                textAlign: isMobile ? 'center' : 'left',
-              }}
-            >
-              {artist?.name}
-            </Typography>
-          </Box>
-
-          {/* Groups */}
-          <Stack spacing={4} mt={2}>
-            {Object.entries(groups).map(([groupName, items], idx) => (
-              <Box
-                key={groupName}
-                sx={{ ...fadeIn, animationDelay: `${0.2 + idx * 0.1}s` }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    opacity: 0.7,
-                    textAlign: 'center',
-                    textTransform: 'uppercase',
-                    mb: 1,
-                    letterSpacing: 1,
-                  }}
-                >
-                  {groupName}
-                </Typography>
-
-                <Stack spacing={1.5}>
-                  {items.map((s) => (
-                    <Button
-                      key={s.id}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        py: 1.8,
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        background:
-                          'linear-gradient(90deg, #6A5ACD,#7B68EE,#6A5ACD)',
-                        display: 'flex',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
-                        fontSize: 16,
-                        fontWeight: 600,
-                        gap: 1.5,
-                        '&:hover': {
-                          transform: 'scale(1.03)',
-                          transition: '0.2s',
-                        },
-                      }}
-                      startIcon={getPlatformIcon(s)}
-                    >
-                      {s.name}
-                    </Button>
-                  ))}
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
-        </Box>
-
-        {/* RIGHT PANEL (IMAGE) ---------------------------------------------- */}
-        <Fade in timeout={900}>
-          <Box
-            sx={{
-              flex: 1,
-              position: 'relative',
-              minHeight: '100vh',
-              backgroundColor: '#000',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              p: 2,
-            }}
-          >
-            {banner ? (
-              <Box
-                component="img"
-                src={banner}
-                alt="Banner"
+          {Object.entries(groups).map(([group, items], idx) => (
+            <Box key={group} sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
                 sx={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
+                  opacity: 0.8,
+                  mb: 2,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
                 }}
-              />
-            ) : (
-              <Typography>No Banner</Typography>
-            )}
-          </Box>
-        </Fade>
-      </Box>
-    </>
-  );
-};
+              >
+                {group}
+              </Typography>
 
-export default HomePage;
+              <Stack spacing={2}>
+                {items.map((s) => (
+                  <Button
+                    key={s.id}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    fullWidth
+                    sx={{
+                      py: 1.6,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontSize: 16,
+                      justifyContent: "flex-start",
+                      gap: 1.6,
+                      color: textColor,
+                      background: buttonGradient,
+                      boxShadow: "0 0 10px #0006",
+                      "&:hover": {
+                        transform: "scale(1.02)",
+                        transition: "0.2s",
+                      },
+                    }}
+                    startIcon={getPlatformIcon(s)}
+                  >
+                    {s.name}
+                  </Button>
+                ))}
+              </Stack>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+}

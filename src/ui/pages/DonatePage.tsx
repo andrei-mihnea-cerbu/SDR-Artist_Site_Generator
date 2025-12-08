@@ -139,9 +139,7 @@ const DonatePage: React.FC = () => {
   const photoUrl = `${bucketUrl}/${encodedPath}`;
 
   return (
-    <AnimatedGradientBackground
-      imageUrl={photoUrl}
-    >
+    <AnimatedGradientBackground imageUrl={photoUrl}>
       <Paper
         elevation={10}
         sx={{

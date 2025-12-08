@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import compression from 'compression';
+import { Readable } from 'stream';
 
 import paypalRouter from './routers/paypal.router';
 
@@ -143,6 +144,36 @@ app.get('/info', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('❌ Failed to get artist info:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/proxy-image', async (req: Request, res: Response) => {
+  try {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).send("Missing 'url' parameter");
+
+    const upstream = await fetch(url);
+
+    if (!upstream.ok) {
+      console.error(
+        'Proxy fetch failed:',
+        upstream.status,
+        upstream.statusText
+      );
+      return res.status(500).send('Image fetch failed');
+    }
+
+    const contentType = upstream.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    // Convert WHATWG stream → Node stream and pipe it
+    const nodeStream = Readable.fromWeb(upstream.body as any);
+
+    nodeStream.pipe(res);
+  } catch (err) {
+    console.error('❌ Proxy error:', err);
+    res.status(500).send('Proxy error');
   }
 });
 

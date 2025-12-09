@@ -105,7 +105,9 @@ export default function HomePage() {
         const { data } = await axios.get<InfoResponse>(`/info`);
 
         setArtist(data.artist);
-        setSocials(data.socials); // NO GROUPING
+        setSocials(
+          data.socials.slice().sort((a, b) => a.name.localeCompare(b.name))
+        ); // NO GROUPING
 
         if (data.description.imageGallery.length > 0) {
           const rel = encodeURI(data.description.imageGallery[0]);

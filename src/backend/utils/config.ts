@@ -28,9 +28,6 @@ export class Config {
       PAYPAL_RETURN_URL: z.string(),
       PAYPAL_CANCEL_URL: z.string(),
 
-      PATH_TO_DONATION_INFO_TEMPLATE: z.string(),
-      EMAIL_FROM: z.string().email(),
-
       DATABASE_PATH: z.string(),
       DATABASE_SYNC_INTERVAL_MS: z.string().default('300000'),
 

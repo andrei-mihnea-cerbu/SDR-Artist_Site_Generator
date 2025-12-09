@@ -154,7 +154,8 @@ export class LocalDatabase {
 
   // 🔁 Fetch all from API and store locally
   private async fetchAndStoreAll() {
-    console.log('[LocalDB] 🔄 Syncing with main API...');
+    console.log('[LocalDB] 🔄 Full sync with main API...');
+
     try {
       const artistsRes = await this.http.get<Artist[]>('/artists');
       const artists = artistsRes.status === 200 ? artistsRes.body : [];
@@ -164,6 +165,12 @@ export class LocalDatabase {
         return;
       }
 
+      // 🧹 CLEAR ALL TABLES BEFORE SYNC
+      this.db.prepare('DELETE FROM artists').run();
+      this.db.prepare('DELETE FROM descriptions').run();
+      this.db.prepare('DELETE FROM socials').run();
+      this.db.prepare('DELETE FROM shops').run();
+
       let totalDescriptions = 0;
       let totalSocials = 0;
       let totalShops = 0;
@@ -171,7 +178,7 @@ export class LocalDatabase {
       for (const artist of artists) {
         this.upsertArtist(artist);
 
-        // Fetch each set in parallel
+        // Fetch subsets in parallel
         const [descRes, socialsRes, shopRes] = await Promise.all([
           this.http.get<Description>(`/descriptions?artistId=${artist.id}`),
           this.http.get<Social[]>(`/socials?artistId=${artist.id}`),
@@ -179,9 +186,7 @@ export class LocalDatabase {
         ]);
 
         const desc = descRes.status === 200 ? descRes.body : null;
-
-        const socials = socialsRes.body;
-
+        const socials = socialsRes.body || [];
         const shop = shopRes.status === 200 ? shopRes.body : null;
 
         const insertTx = this.db.transaction(() => {
@@ -189,8 +194,12 @@ export class LocalDatabase {
             this.upsertDescription(desc);
             totalDescriptions++;
           }
-          for (const s of socials) this.upsertSocial(s, artist.id);
+
+          for (const s of socials) {
+            this.upsertSocial(s, artist.id);
+          }
           totalSocials += socials.length;
+
           if (shop) {
             this.upsertShop(shop);
             totalShops++;
@@ -201,7 +210,7 @@ export class LocalDatabase {
       }
 
       console.log(
-        `[LocalDB] ✅ Synced ${artists.length} artists, ${totalDescriptions} descriptions, ${totalSocials} socials, ${totalShops} shops`
+        `[LocalDB] ✅ Synced clean database: ${artists.length} artists, ${totalDescriptions} descriptions, ${totalSocials} socials, ${totalShops} shops`
       );
     } catch (err: any) {
       console.warn(`[LocalDB] ❌ Sync failed: ${err.message}`);

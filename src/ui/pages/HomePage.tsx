@@ -212,6 +212,19 @@ export default function HomePage() {
               </Fade>
             )}
 
+            {/* SUBTITLE */}
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 4,
+                opacity: 0.85,
+                fontWeight: 500,
+                color: textColor,
+              }}
+            >
+              Connect with {artist?.name} on your favorite platforms
+            </Typography>
+
             {/* SOCIAL LIST */}
             <Stack spacing={2}>
               {socials.map((s, idx) => (

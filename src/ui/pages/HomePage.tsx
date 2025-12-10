@@ -24,9 +24,7 @@ import { InfoResponse } from '../interfaces/info';
 import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
 import { ColorEngineInstance } from '../utils/color_engine';
 
-// ================================================
-// ICON HELPERS
-// ================================================
+// ICON HELPERS -----------------------------------------
 
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
@@ -72,9 +70,7 @@ const getPlatformIcon = (s: Social) => {
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
-// ================================================
-// MAIN COMPONENT
-// ================================================
+// MAIN COMPONENT -----------------------------------------
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -93,9 +89,6 @@ export default function HomePage() {
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
   const [fadeIn, setFadeIn] = useState(false);
 
-  // ================================================
-  // LOAD INFO
-  // ================================================
   useEffect(() => {
     const load = async () => {
       try {
@@ -113,12 +106,10 @@ export default function HomePage() {
           setPhotoUrl(full);
 
           const palette = await ColorEngineInstance.extractPalette(full);
-
           if (palette) {
             setPanelColor(palette.oppositeSolid);
             setTextColor(palette.solidTextColor);
             setBgTextColor(palette.textColor);
-
             setButtonColor(palette.buttonSolid);
             setButtonTextColor(palette.buttonTextColor);
           }
@@ -162,10 +153,8 @@ export default function HomePage() {
       }}
     >
       <Fade in={fadeIn} timeout={700}>
-        <Box sx={{ width: '100%', maxWidth: 1400 }}>
-          {/* ================================================================== */}
-          {/* TITLE PANEL */}
-          {/* ================================================================== */}
+        <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
+          {/* Title */}
           <Box
             sx={{
               mx: 'auto',
@@ -180,29 +169,23 @@ export default function HomePage() {
               boxShadow: '0 0 25px rgba(0,0,0,0.35)',
             }}
           >
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 700,
-                lineHeight: 1.2,
-              }}
-            >
+            <Typography variant="h3" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
               {artist?.name}
             </Typography>
           </Box>
 
-          {/* ================================================================== */}
-          {/* MAIN TWO-COLUMN LAYOUT */}
-          {/* ================================================================== */}
           <Grid container spacing={4}>
-            {/* LEFT COLUMN — SOCIAL LINKS */}
+            {/* LEFT SOCIALS COLUMN */}
             <Grid
               size={{ xs: 12, md: 4 }}
-              sx={{ display: 'flex', justifyContent: 'center' }}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+              }}
             >
               <Box
                 sx={{
-                  width: '100%',
+                  width: { xs: '90%', md: '100%' },
                   maxWidth: 420,
                   bgcolor: panelColor,
                   color: textColor,
@@ -224,11 +207,15 @@ export default function HomePage() {
                           py: 1.6,
                           borderRadius: 2,
                           fontSize: 16,
-                          justifyContent: 'flex-start',
                           textTransform: 'none',
                           background: buttonColor,
                           color: buttonTextColor,
                           boxShadow: '0 0 12px rgba(0,0,0,0.25)',
+                          justifyContent: 'center', // Center text
+                          '& .MuiButton-startIcon': {
+                            position: 'absolute',
+                            left: 16, // keep icon left
+                          },
                           '&:hover': {
                             transform: 'scale(1.03)',
                             background: buttonColor + 'dd',
@@ -249,7 +236,8 @@ export default function HomePage() {
               {photoUrl && (
                 <Box
                   sx={{
-                    width: '100%',
+                    width: { xs: '90%', md: '100%' },
+                    mx: 'auto',
                     borderRadius: 4,
                     overflow: 'hidden',
                     boxShadow: '0 0 25px rgba(0,0,0,0.35)',
@@ -262,8 +250,8 @@ export default function HomePage() {
                     style={{
                       width: '100%',
                       height: 'auto',
-                      maxHeight: '340px',
-                      objectFit: 'cover',
+                      maxHeight: '260px',
+                      objectFit: 'contain', // NO CROPPING
                     }}
                   />
                 </Box>
@@ -273,6 +261,8 @@ export default function HomePage() {
               {latest && (
                 <Box
                   sx={{
+                    width: { xs: '90%', md: '100%' },
+                    mx: 'auto',
                     background: panelColor,
                     color: textColor,
                     borderRadius: 4,
@@ -298,7 +288,7 @@ export default function HomePage() {
                   </Typography>
 
                   <Grid container spacing={3}>
-                    {/* YouTube Release */}
+                    {/* YouTube */}
                     {latest.youtube && (
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <Box
@@ -310,19 +300,29 @@ export default function HomePage() {
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <img
-                            src={latest.youtube.thumbnailUrl}
-                            style={{
+                          <Box
+                            sx={{
+                              position: 'relative',
                               width: '100%',
-                              borderRadius: 3,
-                              marginBottom: 10,
+                              paddingTop: '56.25%',
                             }}
-                          />
+                          >
+                            <img
+                              src={latest.youtube.thumbnailUrl}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                              }}
+                            />
+                          </Box>
 
-                          <Typography fontWeight={700} sx={{ mb: 1 }}>
+                          <Typography fontWeight={700} sx={{ mt: 1 }}>
                             📺 YouTube Release
                           </Typography>
-
                           <Typography variant="body2">
                             {latest.youtube.title}
                           </Typography>
@@ -330,7 +330,7 @@ export default function HomePage() {
                       </Grid>
                     )}
 
-                    {/* Spotify Release */}
+                    {/* Spotify */}
                     {latest.spotify && (
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <Box
@@ -342,19 +342,29 @@ export default function HomePage() {
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <img
-                            src={latest.spotify.imageUrl}
-                            style={{
+                          <Box
+                            sx={{
+                              position: 'relative',
                               width: '100%',
-                              borderRadius: 3,
-                              marginBottom: 10,
+                              paddingTop: '56.25%',
                             }}
-                          />
+                          >
+                            <img
+                              src={latest.spotify.imageUrl}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                              }}
+                            />
+                          </Box>
 
-                          <Typography fontWeight={700} sx={{ mb: 1 }}>
+                          <Typography fontWeight={700} sx={{ mt: 1 }}>
                             🎵 Spotify Release
                           </Typography>
-
                           <Typography variant="body2">
                             {latest.spotify.name}
                           </Typography>

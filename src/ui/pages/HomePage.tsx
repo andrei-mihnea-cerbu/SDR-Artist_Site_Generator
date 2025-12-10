@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,26 +7,25 @@ import {
   Stack,
   SvgIcon,
   Fade,
-} from "@mui/material";
-import axios from "axios";
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+} from '@mui/material';
+import axios from 'axios';
 
-import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import LanguageIcon from "@mui/icons-material/Language";
-import StorefrontIcon from "@mui/icons-material/Storefront";
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 
-import * as simpleIcons from "simple-icons";
+import * as simpleIcons from 'simple-icons';
 
-import { Artist } from "../interfaces/artist";
-import { Social } from "../interfaces/social";
-import { InfoResponse } from "../interfaces/info";
+import { Artist } from '../interfaces/artist';
+import { Social } from '../interfaces/social';
+import { InfoResponse } from '../interfaces/info';
+import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
+import { ColorEngineInstance } from '../utils/color_engine';
 
-import AnimatedGradientBackground from "../components/AnimatedGradientBackground";
-import { ColorEngineInstance } from "../utils/color_engine";
-
-// -------------------------------------------------
-// ICON UTILS
-// -------------------------------------------------
-
+// ICON BUILDER
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
   return (
@@ -40,37 +39,29 @@ const createSimpleIcon = (icon: any) => {
   );
 };
 
+// PLATFORM ICONS
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
   const url = s.url.toLowerCase();
 
-  if (name.includes("spotify")) return createSimpleIcon(simpleIcons.siSpotify);
-  if (name.includes("apple") || url.includes("music.apple"))
+  if (name.includes('spotify')) return createSimpleIcon(simpleIcons.siSpotify);
+  if (name.includes('apple') || url.includes('music.apple'))
     return createSimpleIcon(simpleIcons.siApple);
-  if (name.includes("youtube") || url.includes("youtu"))
+  if (name.includes('youtube') || url.includes('youtu'))
     return createSimpleIcon(simpleIcons.siYoutube);
-  if (name.includes("tiktok")) return createSimpleIcon(simpleIcons.siTiktok);
-  if (name.includes("music")) return <MusicNoteIcon />;
-
-  if (name.includes("instagram"))
+  if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
+  if (name.includes('instagram'))
     return createSimpleIcon(simpleIcons.siInstagram);
-  if (name.includes("facebook"))
+  if (name.includes('facebook'))
     return createSimpleIcon(simpleIcons.siFacebook);
-
-  if (name.includes("patreon")) return createSimpleIcon(simpleIcons.siPatreon);
-  if (name.includes("paypal")) return createSimpleIcon(simpleIcons.siPaypal);
-  if (name.includes("gofundme"))
+  if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
+  if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
+  if (name.includes('gofundme'))
     return createSimpleIcon(simpleIcons.siGofundme);
+  if (name.includes('merch')) return <StorefrontIcon />;
 
-  if (name.includes("website")) return <LanguageIcon />;
-  if (name.includes("merch")) return <StorefrontIcon />;
-
-  return createSimpleIcon(simpleIcons.siInternetarchive);
+  return <MusicNoteIcon />;
 };
-
-// -------------------------------------------------
-// COMPONENT
-// -------------------------------------------------
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -78,24 +69,28 @@ export default function HomePage() {
   const [artist, setArtist] = useState<Artist | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [socials, setSocials] = useState<Social[]>([]);
-  const [latest, setLatest] = useState<any | null>(null);
+  const [latest, setLatest] = useState<any>(null);
 
-  // Palette
-  const [panelColor, setPanelColor] = useState("#fff");
-  const [textColor, setTextColor] = useState("#000");
-  const [bgTextColor, setBgTextColor] = useState("#fff");
-  const [buttonColor, setButtonColor] = useState("#333");
-  const [buttonTextColor, setButtonTextColor] = useState("#fff");
+  // Dynamic palette
+  const [panelColor, setPanelColor] = useState('#fff');
+  const [textColor, setTextColor] = useState('#000');
+  const [bgTextColor, setBgTextColor] = useState('#fff');
+
+  const [buttonColor, setButtonColor] = useState('#333');
+  const [buttonTextColor, setButtonTextColor] = useState('#fff');
+
+  const [fadeIn, setFadeIn] = useState(false);
 
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
-  // Fade animation
-  const [fadeIn, setFadeIn] = useState(false);
+  // Format titles by removing parenthesis like "(Official Video)"
+  const formatTitle = (title: string) =>
+    title.replace(/ *\([^)]*\) */g, '').trim();
 
   useEffect(() => {
     const load = async () => {
       try {
-        const { data } = await axios.get<InfoResponse>("/info");
+        const { data } = await axios.get<InfoResponse>('/info');
 
         setArtist(data.artist);
         setSocials(
@@ -108,6 +103,7 @@ export default function HomePage() {
           const full = `${bucket}/${rel}`;
           setPhotoUrl(full);
 
+          // Extract UI palette from image
           const palette = await ColorEngineInstance.extractPalette(full);
           if (palette) {
             setPanelColor(palette.oppositeSolid);
@@ -118,7 +114,7 @@ export default function HomePage() {
           }
         }
       } catch (err) {
-        console.error("Error loading info:", err);
+        console.error('Error loading info:', err);
       } finally {
         setLoading(false);
         setTimeout(() => setFadeIn(true), 100);
@@ -132,187 +128,215 @@ export default function HomePage() {
     return (
       <Box
         sx={{
-          height: "100vh",
-          bgcolor: "#000",
-          color: "#fff",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          height: '100vh',
+          bgcolor: '#000',
+          color: '#fff',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <CircularProgress color="inherit" />
       </Box>
     );
 
-  // -------------------------------------------------
-  // PAGE RENDER
-  // -------------------------------------------------
+  const youtube = latest?.youtube;
+  const spotify = latest?.spotify;
 
+  // PAGE ================================
   return (
     <AnimatedGradientBackground
-      imageUrl={photoUrl ?? ""}
+      imageUrl={photoUrl ?? ''}
       style={{
         color: bgTextColor,
-        padding: "20px",
-        display: "flex",
-        justifyContent: "center",
+        padding: '30px',
+        display: 'flex',
+        justifyContent: 'center',
       }}
     >
       <Fade in={fadeIn} timeout={700}>
-        <Box
-          sx={{
-            width: "100%",
-            maxWidth: 1200,
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            gap: 4,
-          }}
-        >
-          {/* LEFT COLUMN — Artist name + Socials */}
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 800,
-                mb: 3,
-                textAlign: { xs: "center", md: "left" },
-                color: "#fff",
-                textShadow: "0 0 15px rgba(0,0,0,0.5)",
-              }}
-            >
-              {artist?.name}
-            </Typography>
-
-            <Stack spacing={2}>
-              {socials.map((s, idx) => (
-                <Fade key={s.id} in={fadeIn} timeout={600 + idx * 120}>
-                  <Button
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    fullWidth
-                    startIcon={getPlatformIcon(s)}
-                    sx={{
-                      py: 1.6,
-                      borderRadius: 2,
-                      fontSize: 16,
-                      justifyContent: "flex-start",
-                      textTransform: "none",
-                      background: buttonColor,
-                      color: buttonTextColor,
-                      boxShadow: "0 0 12px rgba(0,0,0,0.25)",
-                      transition: "0.2s",
-                      "&:hover": {
-                        transform: "scale(1.03)",
-                        background: buttonColor + "dd",
-                      },
-                    }}
-                  >
-                    {s.name}
-                  </Button>
-                </Fade>
-              ))}
-            </Stack>
-          </Box>
-
-          {/* RIGHT COLUMN — Banner + Latest Releases */}
-          <Box
+        <Box sx={{ width: '100%', maxWidth: 1400 }}>
+          {/* ARTIST NAME */}
+          <Typography
+            variant="h2"
+            align="center"
             sx={{
-              flex: 1,
-              background: panelColor,
-              borderRadius: 4,
-              p: 3,
-              color: textColor,
-              boxShadow: "0 0 25px rgba(0,0,0,0.35)",
+              mb: 4,
+              fontWeight: 900,
+              textShadow: '0 0 25px rgba(0,0,0,0.5)',
             }}
           >
-            {/* Banner */}
-            {photoUrl && (
+            {artist?.name}
+          </Typography>
+
+          <Grid container spacing={4}>
+            {/* LEFT COLUMN — SOCIAL LINKS */}
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box
-                component="img"
-                src={photoUrl}
-                alt="artist"
                 sx={{
-                  width: "100%",
-                  borderRadius: 3,
-                  mb: 3,
-                  boxShadow: "0 0 20px rgba(0,0,0,0.3)",
-                }}
-              />
-            )}
-
-            {/* Latest Releases */}
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-              Latest Releases
-            </Typography>
-
-            {/* YouTube */}
-            {latest?.youtube && (
-              <Button
-                href={`https://youtube.com/watch?v=${latest.youtube.videoId}`}
-                target="_blank"
-                fullWidth
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  borderRadius: 3,
-                  background: "#00000015",
+                  background: panelColor,
+                  borderRadius: 4,
+                  p: 3,
+                  boxShadow: '0 0 25px rgba(0,0,0,0.35)',
                   color: textColor,
-                  textTransform: "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
                 }}
               >
-                <Box
-                  component="img"
-                  src={latest.youtube.thumbnailUrl}
-                  alt="YouTube Cover"
-                  sx={{
-                    width: "100%",
-                    borderRadius: 2,
-                    mb: 1,
-                  }}
-                />
-                <Typography sx={{ fontWeight: 600 }}>
-                  {latest.youtube.title}
-                </Typography>
-              </Button>
-            )}
+                <Stack spacing={2}>
+                  {socials.map((s, idx) => (
+                    <Fade key={s.id} in={fadeIn} timeout={600 + idx * 120}>
+                      <Button
+                        href={s.url}
+                        target="_blank"
+                        fullWidth
+                        startIcon={getPlatformIcon(s)}
+                        sx={{
+                          py: 1.6,
+                          borderRadius: 2,
+                          fontSize: 16,
+                          justifyContent: 'flex-start',
+                          textTransform: 'none',
+                          background: buttonColor,
+                          color: buttonTextColor,
+                          boxShadow: '0 0 12px rgba(0,0,0,0.25)',
+                          '&:hover': {
+                            transform: 'scale(1.03)',
+                            background: buttonColor + 'dd',
+                          },
+                        }}
+                      >
+                        {s.name}
+                      </Button>
+                    </Fade>
+                  ))}
+                </Stack>
+              </Box>
+            </Grid>
 
-            {/* Spotify */}
-            {latest?.spotify && (
-              <Button
-                href={latest.spotify.spotifyUrl}
-                target="_blank"
-                fullWidth
-                sx={{
-                  p: 2,
-                  borderRadius: 3,
-                  background: "#00000015",
-                  color: textColor,
-                  textTransform: "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                }}
-              >
+            {/* RIGHT COLUMN — BANNER + LATEST RELEASES */}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {/* BANNER PANEL */}
                 <Box
-                  component="img"
-                  src={latest.spotify.imageUrl}
-                  alt="Spotify Cover"
                   sx={{
-                    width: "100%",
-                    borderRadius: 2,
-                    mb: 1,
+                    background: panelColor,
+                    borderRadius: 4,
+                    p: 3,
+                    boxShadow: '0 0 25px rgba(0,0,0,0.35)',
+                    color: textColor,
                   }}
-                />
-                <Typography sx={{ fontWeight: 600 }}>
-                  {latest.spotify.name}
-                </Typography>
-              </Button>
-            )}
-          </Box>
+                >
+                  {photoUrl && (
+                    <Box
+                      component="img"
+                      src={photoUrl}
+                      alt="banner"
+                      sx={{
+                        width: '100%',
+                        borderRadius: 3,
+                        boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+                      }}
+                    />
+                  )}
+                </Box>
+
+                {/* LATEST RELEASES — SEPARATE TRANSPARENT DIV */}
+                <Box
+                  sx={{
+                    borderRadius: 4,
+                    p: 3,
+                    background: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 0 25px rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    align="center"
+                    sx={{ mb: 3, fontWeight: 700, color: textColor }}
+                  >
+                    Latest Releases
+                  </Typography>
+
+                  <Grid container spacing={3}>
+                    {/* YOUTUBE CARD */}
+                    {youtube && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Card
+                          sx={{
+                            borderRadius: 3,
+                            overflow: 'hidden',
+                            background: panelColor,
+                            boxShadow: '0 0 12px rgba(0,0,0,0.25)',
+                            cursor: 'pointer',
+                            '&:hover': { transform: 'scale(1.03)' },
+                            transition: '0.25s',
+                          }}
+                          onClick={() =>
+                            window.open(
+                              `https://youtube.com/watch?v=${youtube.videoId}`,
+                              '_blank'
+                            )
+                          }
+                        >
+                          <CardMedia
+                            component="img"
+                            image={youtube.thumbnailUrl}
+                            sx={{ height: 180 }}
+                          />
+                          <CardContent
+                            sx={{ textAlign: 'center', color: textColor }}
+                          >
+                            <Typography variant="subtitle1" fontWeight={700}>
+                              🎬 YouTube Release
+                            </Typography>
+                            <Typography variant="body2">
+                              {formatTitle(youtube.title)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    )}
+
+                    {/* SPOTIFY CARD */}
+                    {spotify && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Card
+                          sx={{
+                            borderRadius: 3,
+                            overflow: 'hidden',
+                            background: panelColor,
+                            boxShadow: '0 0 12px rgba(0,0,0,0.25)',
+                            cursor: 'pointer',
+                            '&:hover': { transform: 'scale(1.03)' },
+                            transition: '0.25s',
+                          }}
+                          onClick={() =>
+                            window.open(spotify.spotifyUrl, '_blank')
+                          }
+                        >
+                          <CardMedia
+                            component="img"
+                            image={spotify.imageUrl}
+                            sx={{ height: 180 }}
+                          />
+                          <CardContent
+                            sx={{ textAlign: 'center', color: textColor }}
+                          >
+                            <Typography variant="subtitle1" fontWeight={700}>
+                              🎵 Spotify Release
+                            </Typography>
+                            <Typography variant="body2">
+                              {spotify.name}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
         </Box>
       </Fade>
     </AnimatedGradientBackground>

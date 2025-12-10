@@ -20,7 +20,6 @@ import * as simpleIcons from 'simple-icons';
 import { Artist } from '../interfaces/artist';
 import { Social } from '../interfaces/social';
 import { InfoResponse } from '../interfaces/info';
-
 import { ColorEngineInstance } from '../utils/color_engine';
 
 // =====================================================
@@ -78,7 +77,7 @@ const getPlatformIcon = (s: Social) => {
 };
 
 // =====================================================
-// MAIN PAGE
+// MAIN COMPONENT
 // =====================================================
 
 export default function HomePage() {
@@ -124,8 +123,7 @@ export default function HomePage() {
             setButtonTextColor(palette.buttonTextColor);
           }
         }
-      } catch (err) {
-        console.error('Error loading info:', err);
+      } catch {
       } finally {
         setLoading(false);
         setTimeout(() => setFadeIn(true), 150);
@@ -156,11 +154,11 @@ export default function HomePage() {
       sx={{
         minHeight: '100vh',
         position: 'relative',
-        overflowX: 'hidden',
+        overflow: 'visible', // IMPORTANT FIX
       }}
     >
       {/* ===================================================== */}
-      {/* BACKGROUND BLUR + KEN BURNS */}
+      {/* BLURRED BACKGROUND + KEN BURNS */}
       {/* ===================================================== */}
       {photoUrl && (
         <Box
@@ -170,14 +168,16 @@ export default function HomePage() {
             backgroundImage: `url(${photoUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'blur(4px) brightness(0.55)',
-            transform: 'scale(1.06)',
+            filter: 'blur(6px) brightness(0.65)',
+            transform: 'scale(1.1)',
             animation: 'kenburns 22s ease-in-out infinite',
             zIndex: -2,
+            pointerEvents: 'none',
+
             '@keyframes kenburns': {
-              '0%': { transform: 'scale(1.06)' },
-              '50%': { transform: 'scale(1.12)' },
-              '100%': { transform: 'scale(1.06)' },
+              '0%': { transform: 'scale(1.08)' },
+              '50%': { transform: 'scale(1.13)' },
+              '100%': { transform: 'scale(1.08)' },
             },
           }}
         />
@@ -190,9 +190,13 @@ export default function HomePage() {
           inset: 0,
           bgcolor: 'rgba(0,0,0,0.45)',
           zIndex: -1,
+          pointerEvents: 'none',
         }}
       />
 
+      {/* ===================================================== */}
+      {/* MAIN PAGE CONTENT */}
+      {/* ===================================================== */}
       <Fade in={fadeIn} timeout={700}>
         <Box
           sx={{
@@ -200,13 +204,11 @@ export default function HomePage() {
             maxWidth: 1400,
             mx: 'auto',
             pt: 4,
-            pb: 6,
+            pb: 10,
             px: 2,
           }}
         >
-          {/* ===================================================== */}
           {/* TITLE */}
-          {/* ===================================================== */}
           <Box
             sx={{
               mx: 'auto',
@@ -221,19 +223,13 @@ export default function HomePage() {
               boxShadow: '0 0 25px rgba(0,0,0,0.35)',
             }}
           >
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 700,
-                lineHeight: 1.2,
-              }}
-            >
+            <Typography variant="h3" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
               {artist?.name}
             </Typography>
           </Box>
 
           {/* ===================================================== */}
-          {/* LAYOUT */}
+          {/* GRID LAYOUT */}
           {/* ===================================================== */}
           <Grid container spacing={4}>
             {/* LEFT COLUMN — SOCIALS */}
@@ -266,11 +262,10 @@ export default function HomePage() {
                           borderRadius: 2,
                           fontSize: { xs: 18, md: 22 },
                           justifyContent: 'center',
-                          gap: { xs: 1.5, md: 2 },
+                          gap: { xs: 1.5, md: 2.5 },
                           textTransform: 'none',
                           background: buttonColor,
                           color: buttonTextColor,
-                          boxShadow: '0 0 12px rgba(0,0,0,0.25)',
                           '&:hover': {
                             transform: 'scale(1.03)',
                             background: buttonColor + 'dd',
@@ -285,7 +280,9 @@ export default function HomePage() {
               </Box>
             </Grid>
 
+            {/* ===================================================== */}
             {/* RIGHT COLUMN — LATEST RELEASES */}
+            {/* ===================================================== */}
             <Grid size={{ xs: 12, md: 8 }}>
               {latest && (
                 <Box
@@ -307,42 +304,36 @@ export default function HomePage() {
                       borderRadius: 2,
                       background: buttonColor,
                       color: buttonTextColor,
-                      display: 'inline-block',
+                      width: 'fit-content',
                       mx: 'auto',
                     }}
                   >
                     Latest Releases
                   </Typography>
 
-                  <Grid container spacing={3} justifyContent="center">
+                  <Grid container spacing={3}>
                     {/* YOUTUBE */}
                     {latest.youtube && (
                       <Grid size={{ xs: 12 }}>
                         <Box
                           sx={{
-                            width: { xs: '92%', md: 500 },
-                            mx: 'auto',
                             background: '#ffffff18',
                             borderRadius: 3,
                             p: 2,
                             textAlign: 'center',
+                            maxWidth: 420,
+                            mx: 'auto',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box
-                            sx={{
-                              width: '100%',
-                              aspectRatio: '1 / 1',
-                              mb: 2,
-                            }}
-                          >
+                          <Box sx={{ aspectRatio: '1/1', mb: 2 }}>
                             <img
                               src={latest.youtube.thumbnailUrl}
                               style={{
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                borderRadius: 6,
+                                borderRadius: 3,
                               }}
                             />
                           </Box>
@@ -363,29 +354,23 @@ export default function HomePage() {
                       <Grid size={{ xs: 12 }}>
                         <Box
                           sx={{
-                            width: { xs: '92%', md: 500 },
-                            mx: 'auto',
                             background: '#ffffff18',
                             borderRadius: 3,
                             p: 2,
                             textAlign: 'center',
+                            maxWidth: 420,
+                            mx: 'auto',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box
-                            sx={{
-                              width: '100%',
-                              aspectRatio: '1 / 1',
-                              mb: 2,
-                            }}
-                          >
+                          <Box sx={{ aspectRatio: '1/1', mb: 2 }}>
                             <img
                               src={latest.spotify.imageUrl}
                               style={{
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                borderRadius: 6,
+                                borderRadius: 3,
                               }}
                             />
                           </Box>

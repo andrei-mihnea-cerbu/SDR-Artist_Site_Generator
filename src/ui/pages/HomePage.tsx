@@ -23,9 +23,7 @@ import { InfoResponse } from '../interfaces/info';
 
 import { ColorEngineInstance } from '../utils/color_engine';
 
-// =====================================================
-// ICON HELPERS
-// =====================================================
+// ICON HELPERS ---------------------------------------------------
 
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
@@ -71,9 +69,7 @@ const getPlatformIcon = (s: Social) => {
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
-// =====================================================
-// MAIN COMPONENT
-// =====================================================
+// MAIN COMPONENT ---------------------------------------------------
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -83,7 +79,6 @@ export default function HomePage() {
   const [socials, setSocials] = useState<Social[]>([]);
   const [latest, setLatest] = useState<any>(null);
 
-  // Colors
   const [panelColor, setPanelColor] = useState('#fff');
   const [textColor, setTextColor] = useState('#000');
   const [buttonColor, setButtonColor] = useState('#333');
@@ -92,16 +87,17 @@ export default function HomePage() {
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
   const [fadeIn, setFadeIn] = useState(false);
 
-  // =====================================================
-  // LOAD INFO
-  // =====================================================
+  // LOAD DATA -----------------------------------------------------
+
   useEffect(() => {
     const load = async () => {
       try {
         const { data } = await axios.get<InfoResponse>(`/info`);
 
         setArtist(data.artist);
-        setSocials(data.socials.slice().sort((a, b) => a.name.localeCompare(b.name)));
+        setSocials(
+          data.socials.slice().sort((a, b) => a.name.localeCompare(b.name))
+        );
         setLatest(data.latestReleases);
 
         if (data.description.imageGallery.length > 0) {
@@ -144,21 +140,11 @@ export default function HomePage() {
       </Box>
     );
 
-  // =====================================================
-  // RENDER
-  // =====================================================
+  // RENDER ---------------------------------------------------------
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* ===================================================== */}
-      {/* BLURRED BACKGROUND WITH KEN BURNS */}
-      {/* ===================================================== */}
+    <Box sx={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+      {/* BACKGROUND WITH KEN BURNS BLUR */}
       {photoUrl && (
         <Box
           sx={{
@@ -171,19 +157,19 @@ export default function HomePage() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: 'blur(28px) brightness(0.6)',
-            transform: 'scale(1.12)',
+            transform: 'scale(1.1)',
             animation: 'kenburns 20s ease-in-out infinite',
             zIndex: -2,
             '@keyframes kenburns': {
-              '0%': { transform: 'scale(1.12)' },
+              '0%': { transform: 'scale(1.1)' },
               '50%': { transform: 'scale(1.18)' },
-              '100%': { transform: 'scale(1.12)' },
+              '100%': { transform: 'scale(1.1)' },
             },
           }}
         />
       )}
 
-      {/* OVERLAY */}
+      {/* DARK LAYER */}
       <Box
         sx={{
           position: 'fixed',
@@ -202,9 +188,9 @@ export default function HomePage() {
             width: '100%',
             maxWidth: 1400,
             mx: 'auto',
-            mt: 2,
+            pt: 4,
             pb: 6,
-            px: { xs: 2, sm: 2, md: 2 },
+            px: 2,
           }}
         >
           {/* TITLE */}
@@ -222,19 +208,14 @@ export default function HomePage() {
               boxShadow: '0 0 25px rgba(0,0,0,0.35)',
             }}
           >
-            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+            <Typography variant="h3" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
               {artist?.name}
             </Typography>
           </Box>
 
-          {/* ===================================================== */}
-          {/* TWO COLUMN LAYOUT */}
-          {/* ===================================================== */}
-
+          {/* TWO COLUMN GRID */}
           <Grid container spacing={4}>
-            {/* -------------------------------- */}
-            {/* LEFT COLUMN — SOCIALS */}
-            {/* -------------------------------- */}
+            {/* LEFT PANEL — SOCIALS */}
             <Grid
               size={{ xs: 12, md: 4 }}
               sx={{ display: 'flex', justifyContent: 'center' }}
@@ -256,17 +237,18 @@ export default function HomePage() {
                       <Button
                         href={s.url}
                         target="_blank"
+                        rel="noopener noreferrer"
                         fullWidth
                         startIcon={getPlatformIcon(s)}
                         sx={{
                           py: 1.6,
                           borderRadius: 2,
                           fontSize: 16,
-                          justifyContent: 'center',   // << centered text
-                          gap: 1.5,
+                          justifyContent: 'flex-start',
                           textTransform: 'none',
                           background: buttonColor,
                           color: buttonTextColor,
+                          boxShadow: '0 0 12px rgba(0,0,0,0.25)',
                           '&:hover': {
                             transform: 'scale(1.03)',
                             background: buttonColor + 'dd',
@@ -281,9 +263,7 @@ export default function HomePage() {
               </Box>
             </Grid>
 
-            {/* -------------------------------- */}
-            {/* RIGHT COLUMN — LATEST RELEASES */}
-            {/* -------------------------------- */}
+            {/* RIGHT PANEL — LATEST RELEASES */}
             <Grid size={{ xs: 12, md: 8 }}>
               {latest && (
                 <Box
@@ -293,6 +273,8 @@ export default function HomePage() {
                     borderRadius: 4,
                     p: 3,
                     boxShadow: '0 0 20px rgba(0,0,0,0.35)',
+                    maxWidth: 650, // ⭐ MAKE ENTIRE BOX SMALLER
+                    mx: 'auto',
                   }}
                 >
                   <Typography
@@ -313,8 +295,7 @@ export default function HomePage() {
                   </Typography>
 
                   <Grid container spacing={3}>
-
-                    {/* YOUTUBE */}
+                    {/* YOUTUBE RELEASE */}
                     {latest.youtube && (
                       <Grid size={{ xs: 12 }}>
                         <Box
@@ -323,24 +304,18 @@ export default function HomePage() {
                             borderRadius: 3,
                             p: 2,
                             textAlign: 'center',
+                            maxWidth: 550, // ⭐ Smaller inner cards
+                            mx: 'auto',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          {/* IMAGE WRAPPER */}
-                          <Box
-                            sx={{
-                              aspectRatio: '16/9',
-                              width: '70%',      // smaller
-                              mx: 'auto',        // center
-                              mb: 2,
-                            }}
-                          >
+                          <Box sx={{ aspectRatio: '16/9', mb: 2 }}>
                             <img
                               src={latest.youtube.thumbnailUrl}
                               style={{
                                 width: '100%',
                                 height: '100%',
-                                objectFit: 'contain', // no cropping
+                                objectFit: 'cover',
                                 borderRadius: 3,
                               }}
                             />
@@ -357,7 +332,7 @@ export default function HomePage() {
                       </Grid>
                     )}
 
-                    {/* SPOTIFY */}
+                    {/* SPOTIFY RELEASE */}
                     {latest.spotify && (
                       <Grid size={{ xs: 12 }}>
                         <Box
@@ -366,23 +341,18 @@ export default function HomePage() {
                             borderRadius: 3,
                             p: 2,
                             textAlign: 'center',
+                            maxWidth: 550,
+                            mx: 'auto',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box
-                            sx={{
-                              aspectRatio: '16/9',
-                              width: '70%',
-                              mx: 'auto',
-                              mb: 2,
-                            }}
-                          >
+                          <Box sx={{ aspectRatio: '16/9', mb: 2 }}>
                             <img
                               src={latest.spotify.imageUrl}
                               style={{
                                 width: '100%',
                                 height: '100%',
-                                objectFit: 'contain',
+                                objectFit: 'cover',
                                 borderRadius: 3,
                               }}
                             />
@@ -398,7 +368,6 @@ export default function HomePage() {
                         </Box>
                       </Grid>
                     )}
-
                   </Grid>
                 </Box>
               )}

@@ -223,7 +223,7 @@ export default function HomePage() {
             {latest && (
               <Box
                 sx={{
-                  background: panelColor,
+                  background: 'transparent',
                   color: textColor,
                   borderRadius: 4,
                   p: 3,
@@ -238,7 +238,7 @@ export default function HomePage() {
                     mb: 3,
                     p: 1,
                     borderRadius: 2,
-                    background: buttonColor,
+                    background: panelColor,
                     color: buttonTextColor,
                     width: 'fit-content',
                     mx: 'auto',

@@ -1,5 +1,3 @@
-// STARTING FROM YOUR EXACT LAST VERSION:
-
 import { useEffect, useState } from 'react';
 import {
   Box,
@@ -24,7 +22,10 @@ import { Social } from '../interfaces/social';
 import { InfoResponse } from '../interfaces/info';
 import { ColorEngineInstance } from '../utils/color_engine';
 
+// =====================================================
 // ICON HELPERS
+// =====================================================
+
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
   return (
@@ -52,19 +53,33 @@ const getPlatformIcon = (s: Social) => {
   if (name.includes('youtube') || url.includes('youtu'))
     return createSimpleIcon(simpleIcons.siYoutube);
   if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
-  if (name.includes('music')) return <MusicNoteIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
-  if (name.includes('instagram')) return createSimpleIcon(simpleIcons.siInstagram);
-  if (name.includes('facebook')) return createSimpleIcon(simpleIcons.siFacebook);
+
+  if (name.includes('music'))
+    return <MusicNoteIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
+
+  if (name.includes('instagram'))
+    return createSimpleIcon(simpleIcons.siInstagram);
+  if (name.includes('facebook'))
+    return createSimpleIcon(simpleIcons.siFacebook);
+
   if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
   if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
-  if (name.includes('gofundme')) return createSimpleIcon(simpleIcons.siGofundme);
-  if (name.includes('website') || name.includes('site')) return <LanguageIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
-  if (name.includes('merch')) return <StorefrontIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
+  if (name.includes('gofundme'))
+    return createSimpleIcon(simpleIcons.siGofundme);
+
+  if (name.includes('website') || name.includes('site'))
+    return <LanguageIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
+
+  if (name.includes('merch'))
+    return <StorefrontIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
 
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
+// =====================================================
 // MAIN COMPONENT
+// =====================================================
+
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
@@ -81,13 +96,18 @@ export default function HomePage() {
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
   const [fadeIn, setFadeIn] = useState(false);
 
+  // =====================================================
+  // LOAD INFO
+  // =====================================================
   useEffect(() => {
     const load = async () => {
       try {
         const { data } = await axios.get<InfoResponse>(`/info`);
 
         setArtist(data.artist);
-        setSocials(data.socials.slice().sort((a, b) => a.name.localeCompare(b.name)));
+        setSocials(
+          data.socials.slice().sort((a, b) => a.name.localeCompare(b.name))
+        );
         setLatest(data.latestReleases);
 
         if (data.description.imageGallery.length > 0) {
@@ -130,7 +150,13 @@ export default function HomePage() {
     );
 
   return (
-    <Box sx={{ minHeight: '100dvh', position: 'relative', overflowX: 'hidden' }}>
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        position: 'relative',
+        overflowX: 'hidden',
+      }}
+    >
       {/* BACKGROUND IMAGE */}
       {photoUrl && (
         <Box
@@ -160,8 +186,16 @@ export default function HomePage() {
         }}
       />
 
+      {/* MAIN PAGE CONTENT */}
       <Fade in={fadeIn} timeout={700}>
-        <Box sx={{ mx: 'auto', pt: 4, pb: 10, px: 2 }}>
+        <Box
+          sx={{
+            mx: 'auto',
+            pt: 4,
+            pb: 10,
+            px: 2,
+          }}
+        >
           {/* TITLE */}
           <Box
             sx={{
@@ -182,10 +216,13 @@ export default function HomePage() {
             </Typography>
           </Box>
 
-          {/* GRID */}
+          {/* GRID LAYOUT */}
           <Grid container spacing={4}>
-            {/* LEFT SOCIALS: MAKE WIDER */}
-            <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', justifyContent: 'center' }}>
+            {/* LEFT COLUMN — SOCIALS */}
+            <Grid
+              size={{ xs: 12, md: 5 }}
+              sx={{ display: 'flex', justifyContent: 'center' }}
+            >
               <Box
                 sx={{
                   width: '100%',
@@ -229,7 +266,7 @@ export default function HomePage() {
               </Box>
             </Grid>
 
-            {/* RIGHT COLUMN (LATEST RELEASES) */}
+            {/* RIGHT COLUMN — LATEST RELEASES */}
             <Grid size={{ xs: 12, md: 7 }}>
               {latest && (
                 <Box
@@ -259,95 +296,127 @@ export default function HomePage() {
                   </Typography>
 
                   <Grid container spacing={3}>
-                    {/* YOUTUBE */}
+                    {/* YOUTUBE CARD */}
                     {latest.youtube && (
-                      <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <Box
-                          sx={{
+                      <Grid
+                        size={{ xs: 12 }}
+                        sx={{ display: 'flex', justifyContent: 'center' }}
+                      >
+                        <a
+                          href={`https://www.youtube.com/watch?v=${latest.youtube.videoId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            textDecoration: 'none',
                             width: '100%',
                             maxWidth: 420,
-                            mx: 'auto',
-                            background: '#ffffff18',
-                            borderRadius: 3,
-                            p: 2,
-                            textAlign: 'center',
-                            boxShadow: '0 0 10px rgba(0,0,0,0.25)',
-                            display: 'flex',
-                            flexDirection: 'column',
                           }}
                         >
-                          {/* IMAGE WITHOUT 1/1 RATIO */}
                           <Box
                             sx={{
                               width: '100%',
+                              background: '#ffffff18',
                               borderRadius: 3,
-                              overflow: 'hidden',
-                              mb: 2,
+                              p: 2,
+                              textAlign: 'center',
+                              boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              cursor: 'pointer',
+                              transition: 'transform 0.2s',
+                              '&:hover': { transform: 'scale(1.03)' },
                             }}
                           >
-                            <img
-                              src={latest.youtube.thumbnailUrl}
-                              style={{
+                            <Box
+                              sx={{
                                 width: '100%',
-                                height: 'auto',
-                                objectFit: 'cover',
-                                display: 'block',
+                                overflow: 'hidden',
+                                borderRadius: 3,
+                                mb: 2,
                               }}
-                            />
+                            >
+                              <img
+                                src={latest.youtube.thumbnailUrl}
+                                style={{
+                                  width: '100%',
+                                  height: 'auto',
+                                  objectFit: 'cover',
+                                  display: 'block',
+                                }}
+                              />
+                            </Box>
+
+                            <Typography fontWeight={700} sx={{ mb: 1 }}>
+                              📺 YouTube Release
+                            </Typography>
+
+                            <Typography variant="body2">
+                              {latest.youtube.title}
+                            </Typography>
                           </Box>
-
-                          <Typography fontWeight={700} sx={{ mb: 1 }}>
-                            📺 YouTube Release
-                          </Typography>
-
-                          <Typography variant="body2">{latest.youtube.title}</Typography>
-                        </Box>
+                        </a>
                       </Grid>
                     )}
 
-                    {/* SPOTIFY */}
+                    {/* SPOTIFY CARD */}
                     {latest.spotify && (
-                      <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <Box
-                          sx={{
+                      <Grid
+                        size={{ xs: 12 }}
+                        sx={{ display: 'flex', justifyContent: 'center' }}
+                      >
+                        <a
+                          href={latest.spotify.spotifyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            textDecoration: 'none',
                             width: '100%',
                             maxWidth: 420,
-                            mx: 'auto',
-                            background: '#ffffff18',
-                            borderRadius: 3,
-                            p: 2,
-                            textAlign: 'center',
-                            boxShadow: '0 0 10px rgba(0,0,0,0.25)',
-                            display: 'flex',
-                            flexDirection: 'column',
                           }}
                         >
-                          {/* IMAGE WITHOUT 1/1 RATIO */}
                           <Box
                             sx={{
                               width: '100%',
+                              background: '#ffffff18',
                               borderRadius: 3,
-                              overflow: 'hidden',
-                              mb: 2,
+                              p: 2,
+                              textAlign: 'center',
+                              boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              cursor: 'pointer',
+                              transition: 'transform 0.2s',
+                              '&:hover': { transform: 'scale(1.03)' },
                             }}
                           >
-                            <img
-                              src={latest.spotify.imageUrl}
-                              style={{
+                            <Box
+                              sx={{
                                 width: '100%',
-                                height: 'auto',
-                                objectFit: 'cover',
-                                display: 'block',
+                                overflow: 'hidden',
+                                borderRadius: 3,
+                                mb: 2,
                               }}
-                            />
+                            >
+                              <img
+                                src={latest.spotify.imageUrl ?? ''}
+                                style={{
+                                  width: '100%',
+                                  height: 'auto',
+                                  objectFit: 'cover',
+                                  display: 'block',
+                                }}
+                              />
+                            </Box>
+
+                            <Typography fontWeight={700} sx={{ mb: 1 }}>
+                              🎵 Spotify Release
+                            </Typography>
+
+                            <Typography variant="body2">
+                              {latest.spotify.name}
+                            </Typography>
                           </Box>
-
-                          <Typography fontWeight={700} sx={{ mb: 1 }}>
-                            🎵 Spotify Release
-                          </Typography>
-
-                          <Typography variant="body2">{latest.spotify.name}</Typography>
-                        </Box>
+                        </a>
                       </Grid>
                     )}
                   </Grid>

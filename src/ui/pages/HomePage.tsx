@@ -234,9 +234,7 @@ export default function HomePage() {
           <Grid container spacing={4}>
             {/* LEFT COLUMN — SOCIALS */}
             <Grid
-              item
-              xs={12}
-              md={4}
+              size={{ xs: 12, md: 4 }}
               sx={{ display: 'flex', justifyContent: 'center' }}
             >
               <Box
@@ -283,7 +281,7 @@ export default function HomePage() {
             </Grid>
 
             {/* RIGHT COLUMN — LATEST RELEASES */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               {latest && (
                 <Box
                   sx={{
@@ -315,8 +313,7 @@ export default function HomePage() {
                     {/* YOUTUBE */}
                     {latest.youtube && (
                       <Grid
-                        item
-                        xs={12}
+                        size={{ xs: 12 }}
                         sx={{ display: 'flex', justifyContent: 'center' }}
                       >
                         <Box
@@ -366,8 +363,7 @@ export default function HomePage() {
                     {/* SPOTIFY */}
                     {latest.spotify && (
                       <Grid
-                        item
-                        xs={12}
+                        size={{ xs: 12 }}
                         sx={{ display: 'flex', justifyContent: 'center' }}
                       >
                         <Box

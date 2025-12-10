@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -7,21 +7,21 @@ import {
   Stack,
   SvgIcon,
   Fade,
-} from '@mui/material';
-import axios from 'axios';
+} from "@mui/material";
+import axios from "axios";
 
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import LanguageIcon from '@mui/icons-material/Language';
-import StorefrontIcon from '@mui/icons-material/Storefront';
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
+import LanguageIcon from "@mui/icons-material/Language";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 
-import * as simpleIcons from 'simple-icons';
+import * as simpleIcons from "simple-icons";
 
-import { Artist } from '../interfaces/artist';
-import { Social } from '../interfaces/social';
-import { InfoResponse } from '../interfaces/info';
+import { Artist } from "../interfaces/artist";
+import { Social } from "../interfaces/social";
+import { InfoResponse } from "../interfaces/info";
 
-import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
-import { ColorEngineInstance } from '../utils/color_engine';
+import AnimatedGradientBackground from "../components/AnimatedGradientBackground";
+import { ColorEngineInstance } from "../utils/color_engine";
 
 // -------------------------------------------------
 // ICON UTILS
@@ -42,31 +42,28 @@ const createSimpleIcon = (icon: any) => {
 
 const getPlatformIcon = (s: Social) => {
   const name = s.name.toLowerCase();
-  const url = (s.originalUrl || s.url).toLowerCase();
+  const url = s.url.toLowerCase();
 
-  if (name.includes('spotify')) return createSimpleIcon(simpleIcons.siSpotify);
-  if (name.includes('apple') || url.includes('music.apple'))
+  if (name.includes("spotify")) return createSimpleIcon(simpleIcons.siSpotify);
+  if (name.includes("apple") || url.includes("music.apple"))
     return createSimpleIcon(simpleIcons.siApple);
-  if (name.includes('youtube') || url.includes('youtu'))
+  if (name.includes("youtube") || url.includes("youtu"))
     return createSimpleIcon(simpleIcons.siYoutube);
-  if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
+  if (name.includes("tiktok")) return createSimpleIcon(simpleIcons.siTiktok);
+  if (name.includes("music")) return <MusicNoteIcon />;
 
-  if (name.includes('music')) return <MusicNoteIcon />;
-
-  if (name.includes('instagram'))
+  if (name.includes("instagram"))
     return createSimpleIcon(simpleIcons.siInstagram);
-  if (name.includes('facebook'))
+  if (name.includes("facebook"))
     return createSimpleIcon(simpleIcons.siFacebook);
 
-  if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
-  if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
-  if (name.includes('gofundme'))
+  if (name.includes("patreon")) return createSimpleIcon(simpleIcons.siPatreon);
+  if (name.includes("paypal")) return createSimpleIcon(simpleIcons.siPaypal);
+  if (name.includes("gofundme"))
     return createSimpleIcon(simpleIcons.siGofundme);
 
-  if (name.includes('website') || name.includes('site'))
-    return <LanguageIcon />;
-
-  if (name.includes('merch')) return <StorefrontIcon />;
+  if (name.includes("website")) return <LanguageIcon />;
+  if (name.includes("merch")) return <StorefrontIcon />;
 
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
@@ -81,33 +78,30 @@ export default function HomePage() {
   const [artist, setArtist] = useState<Artist | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [socials, setSocials] = useState<Social[]>([]);
+  const [latest, setLatest] = useState<any | null>(null);
 
   // Palette
-  const [panelColor, setPanelColor] = useState('#fff');
-  const [textColor, setTextColor] = useState('#000'); // panel text
-  const [bgTextColor, setBgTextColor] = useState('#fff'); // gradient text
-
-  const [buttonColor, setButtonColor] = useState('#333');
-  const [buttonTextColor, setButtonTextColor] = useState('#fff');
+  const [panelColor, setPanelColor] = useState("#fff");
+  const [textColor, setTextColor] = useState("#000");
+  const [bgTextColor, setBgTextColor] = useState("#fff");
+  const [buttonColor, setButtonColor] = useState("#333");
+  const [buttonTextColor, setButtonTextColor] = useState("#fff");
 
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
-  // For fade animations
+  // Fade animation
   const [fadeIn, setFadeIn] = useState(false);
-
-  // -------------------------------------------------
-  // LOAD DATA + APPLY COLOR PALETTE
-  // -------------------------------------------------
 
   useEffect(() => {
     const load = async () => {
       try {
-        const { data } = await axios.get<InfoResponse>(`/info`);
+        const { data } = await axios.get<InfoResponse>("/info");
 
         setArtist(data.artist);
         setSocials(
           data.socials.slice().sort((a, b) => a.name.localeCompare(b.name))
-        ); // NO GROUPING
+        );
+        setLatest(data.latestReleases);
 
         if (data.description.imageGallery.length > 0) {
           const rel = encodeURI(data.description.imageGallery[0]);
@@ -115,22 +109,18 @@ export default function HomePage() {
           setPhotoUrl(full);
 
           const palette = await ColorEngineInstance.extractPalette(full);
-
           if (palette) {
             setPanelColor(palette.oppositeSolid);
             setTextColor(palette.solidTextColor);
             setBgTextColor(palette.textColor);
-
             setButtonColor(palette.buttonSolid);
             setButtonTextColor(palette.buttonTextColor);
           }
         }
       } catch (err) {
-        console.error('Error loading info:', err);
+        console.error("Error loading info:", err);
       } finally {
         setLoading(false);
-
-        // Trigger fade animation AFTER load
         setTimeout(() => setFadeIn(true), 100);
       }
     };
@@ -138,20 +128,16 @@ export default function HomePage() {
     load();
   }, []);
 
-  // -------------------------------------------------
-  // LOADING
-  // -------------------------------------------------
-
   if (loading)
     return (
       <Box
         sx={{
-          height: '100vh',
-          bgcolor: '#000',
-          color: '#fff',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+          height: "100vh",
+          bgcolor: "#000",
+          color: "#fff",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
         <CircularProgress color="inherit" />
@@ -164,77 +150,42 @@ export default function HomePage() {
 
   return (
     <AnimatedGradientBackground
-      imageUrl={photoUrl ?? ''}
+      imageUrl={photoUrl ?? ""}
       style={{
         color: bgTextColor,
-        padding: '20px',
-        display: 'flex',
-        justifyContent: 'center',
+        padding: "20px",
+        display: "flex",
+        justifyContent: "center",
       }}
     >
       <Fade in={fadeIn} timeout={700}>
-        <Box sx={{ width: '100%', maxWidth: 650 }}>
-          {/* MAIN PANEL */}
-          <Box
-            sx={{
-              background: panelColor,
-              borderRadius: 4,
-              p: 3,
-              textAlign: 'center',
-              boxShadow: '0 0 25px rgba(0,0,0,0.35)',
-              color: textColor,
-            }}
-          >
-            {/* NAME */}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 1200,
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 4,
+          }}
+        >
+          {/* LEFT COLUMN — Artist name + Socials */}
+          <Box sx={{ flex: 1 }}>
             <Typography
               variant="h3"
               sx={{
-                fontWeight: 700,
+                fontWeight: 800,
                 mb: 3,
-                color: textColor,
+                textAlign: { xs: "center", md: "left" },
+                color: "#fff",
+                textShadow: "0 0 15px rgba(0,0,0,0.5)",
               }}
             >
               {artist?.name}
             </Typography>
 
-            {/* IMAGE */}
-            {photoUrl && (
-              <Fade in={fadeIn} timeout={1000}>
-                <Box
-                  component="img"
-                  src={photoUrl}
-                  alt="artist"
-                  sx={{
-                    width: '100%',
-                    borderRadius: 3,
-                    mb: 4,
-                    boxShadow: '0 0 20px rgba(0,0,0,0.3)',
-                  }}
-                />
-              </Fade>
-            )}
-
-            {/* SUBTITLE */}
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 4,
-                opacity: 0.85,
-                fontWeight: 500,
-                color: textColor,
-              }}
-            >
-              Connect with {artist?.name} on your favorite platforms
-            </Typography>
-
-            {/* SOCIAL LIST */}
             <Stack spacing={2}>
               {socials.map((s, idx) => (
-                <Fade
-                  key={s.id}
-                  in={fadeIn}
-                  timeout={600 + idx * 120} // stagger fade
-                >
+                <Fade key={s.id} in={fadeIn} timeout={600 + idx * 120}>
                   <Button
                     href={s.url}
                     target="_blank"
@@ -245,15 +196,15 @@ export default function HomePage() {
                       py: 1.6,
                       borderRadius: 2,
                       fontSize: 16,
-                      justifyContent: 'flex-start',
-                      textTransform: 'none',
+                      justifyContent: "flex-start",
+                      textTransform: "none",
                       background: buttonColor,
                       color: buttonTextColor,
-                      boxShadow: '0 0 12px rgba(0,0,0,0.25)',
-                      transition: '0.2s',
-                      '&:hover': {
-                        transform: 'scale(1.03)',
-                        background: buttonColor + 'dd',
+                      boxShadow: "0 0 12px rgba(0,0,0,0.25)",
+                      transition: "0.2s",
+                      "&:hover": {
+                        transform: "scale(1.03)",
+                        background: buttonColor + "dd",
                       },
                     }}
                   >
@@ -262,6 +213,105 @@ export default function HomePage() {
                 </Fade>
               ))}
             </Stack>
+          </Box>
+
+          {/* RIGHT COLUMN — Banner + Latest Releases */}
+          <Box
+            sx={{
+              flex: 1,
+              background: panelColor,
+              borderRadius: 4,
+              p: 3,
+              color: textColor,
+              boxShadow: "0 0 25px rgba(0,0,0,0.35)",
+            }}
+          >
+            {/* Banner */}
+            {photoUrl && (
+              <Box
+                component="img"
+                src={photoUrl}
+                alt="artist"
+                sx={{
+                  width: "100%",
+                  borderRadius: 3,
+                  mb: 3,
+                  boxShadow: "0 0 20px rgba(0,0,0,0.3)",
+                }}
+              />
+            )}
+
+            {/* Latest Releases */}
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+              Latest Releases
+            </Typography>
+
+            {/* YouTube */}
+            {latest?.youtube && (
+              <Button
+                href={`https://youtube.com/watch?v=${latest.youtube.videoId}`}
+                target="_blank"
+                fullWidth
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  borderRadius: 3,
+                  background: "#00000015",
+                  color: textColor,
+                  textTransform: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={latest.youtube.thumbnailUrl}
+                  alt="YouTube Cover"
+                  sx={{
+                    width: "100%",
+                    borderRadius: 2,
+                    mb: 1,
+                  }}
+                />
+                <Typography sx={{ fontWeight: 600 }}>
+                  {latest.youtube.title}
+                </Typography>
+              </Button>
+            )}
+
+            {/* Spotify */}
+            {latest?.spotify && (
+              <Button
+                href={latest.spotify.spotifyUrl}
+                target="_blank"
+                fullWidth
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  background: "#00000015",
+                  color: textColor,
+                  textTransform: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={latest.spotify.imageUrl}
+                  alt="Spotify Cover"
+                  sx={{
+                    width: "100%",
+                    borderRadius: 2,
+                    mb: 1,
+                  }}
+                />
+                <Typography sx={{ fontWeight: 600 }}>
+                  {latest.spotify.name}
+                </Typography>
+              </Button>
+            )}
           </Box>
         </Box>
       </Fade>

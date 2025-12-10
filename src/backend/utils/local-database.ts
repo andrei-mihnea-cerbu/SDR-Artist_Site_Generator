@@ -8,6 +8,7 @@ import { Shop } from '../interfaces/shop';
 import { Social } from '../interfaces/social';
 import { HttpClient } from './http-client';
 
+// --- DB Row Interfaces ---
 interface ArtistRow {
   id: string;
   name: string;
@@ -33,8 +34,12 @@ interface SocialRow {
   name: string;
   description: string;
   url: string;
-  originalUrl: string;
-  socialLabelsList: string;
+}
+
+interface LatestReleasesRow {
+  artistId: string;
+  youtube: string;
+  spotify: string;
 }
 
 export class LocalDatabase {
@@ -43,7 +48,7 @@ export class LocalDatabase {
   private config: Config;
   private http: HttpClient;
   private syncIntervalMs: number;
-  private syncing: boolean = false;
+  private syncing = false;
   private readyPromise?: Promise<void>;
 
   private constructor() {
@@ -56,15 +61,8 @@ export class LocalDatabase {
     const dbPath = this.config.get('DATABASE_PATH');
     const dbDir = path.dirname(dbPath);
 
-    // 🧱 Ensure directory exists
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
-
-    // 🧩 Ensure database file exists
-    if (!fs.existsSync(dbPath)) {
-      fs.writeFileSync(dbPath, '');
-    }
+    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+    if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, '');
 
     this.db = new Database(dbPath);
 
@@ -80,158 +78,164 @@ export class LocalDatabase {
     return LocalDatabase.instance;
   }
 
-  // 🟢 Initialize tables and perform first sync
+  // --- INITIALIZATION ---
   public async ready(): Promise<void> {
-    if (this.readyPromise) return this.readyPromise; // Avoid double init
+    if (this.readyPromise) return this.readyPromise;
 
     this.readyPromise = (async () => {
-      console.log('[LocalDB] 🧱 Initializing local database...');
+      console.log('[LocalDB] Initializing...');
       this.createTables();
       await this.fetchAndStoreAll();
       this.startSyncSchedule();
-      console.log('[LocalDB] ✅ Ready and scheduled for periodic sync.');
+      console.log('[LocalDB] Ready ✓');
     })();
 
     return this.readyPromise;
   }
 
-  // 🧱 Create all required tables
+  // --- TABLE CREATION ---
   private createTables() {
     this.db
       .prepare(
-        `CREATE TABLE IF NOT EXISTS artists (
-          id TEXT PRIMARY KEY,
-          name TEXT,
-          type TEXT,
-          website TEXT,
-          webmail_url TEXT,
-          webmail_email TEXT,
-          webmail_password TEXT,
-          logos TEXT,
-          favicons TEXT
-        )`
+        `
+      CREATE TABLE IF NOT EXISTS artists (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        type TEXT,
+        website TEXT,
+        webmail_url TEXT,
+        webmail_email TEXT,
+        webmail_password TEXT,
+        logos TEXT,
+        favicons TEXT
+      )
+    `
       )
       .run();
 
     this.db
       .prepare(
-        `CREATE TABLE IF NOT EXISTS descriptions (
-          id TEXT PRIMARY KEY,
-          artistId TEXT,
-          description TEXT,
-          imageGallery TEXT
-        )`
+        `
+      CREATE TABLE IF NOT EXISTS descriptions (
+        id TEXT PRIMARY KEY,
+        artistId TEXT,
+        description TEXT,
+        imageGallery TEXT
+      )
+    `
       )
       .run();
 
     this.db
       .prepare(
-        `CREATE TABLE IF NOT EXISTS shops (
-          id TEXT PRIMARY KEY,
-          artistId TEXT,
-          name TEXT,
-          website TEXT,
-          imageGallery TEXT,
-          shopFeed TEXT
-        )`
+        `
+      CREATE TABLE IF NOT EXISTS shops (
+        id TEXT PRIMARY KEY,
+        artistId TEXT,
+        name TEXT,
+        website TEXT,
+        imageGallery TEXT,
+        shopFeed TEXT
+      )
+    `
       )
       .run();
 
     this.db
       .prepare(
-        `CREATE TABLE IF NOT EXISTS socials (
-          id TEXT PRIMARY KEY,
-          artistId TEXT,
-          name TEXT,
-          description TEXT,
-          url TEXT,
-          originalUrl TEXT,
-          socialLabelsList TEXT
-        )`
+        `
+      CREATE TABLE IF NOT EXISTS socials (
+        id TEXT PRIMARY KEY,
+        artistId TEXT,
+        name TEXT,
+        description TEXT,
+        url TEXT
+      )
+    `
+      )
+      .run();
+
+    this.db
+      .prepare(
+        `
+      CREATE TABLE IF NOT EXISTS latest_releases (
+        artistId TEXT PRIMARY KEY,
+        youtube TEXT,
+        spotify TEXT
+      )
+    `
       )
       .run();
   }
 
-  // 🔁 Fetch all from API and store locally
+  // --- MAIN SYNC ---
   private async fetchAndStoreAll() {
-    console.log('[LocalDB] 🔄 Full sync with main API...');
+    console.log('[LocalDB] Sync started…');
 
     try {
       const artistsRes = await this.http.get<Artist[]>('/artists');
       const artists = artistsRes.status === 200 ? artistsRes.body : [];
 
       if (!artists.length) {
-        console.warn('[LocalDB] ⚠️ No artists received from API');
+        console.warn('[LocalDB] No artists returned by API');
         return;
       }
 
-      // 🧹 CLEAR ALL TABLES BEFORE SYNC
+      // CLEAR ALL TABLES
       this.db.prepare('DELETE FROM artists').run();
       this.db.prepare('DELETE FROM descriptions').run();
       this.db.prepare('DELETE FROM socials').run();
       this.db.prepare('DELETE FROM shops').run();
-
-      let totalDescriptions = 0;
-      let totalSocials = 0;
-      let totalShops = 0;
+      this.db.prepare('DELETE FROM latest_releases').run();
 
       for (const artist of artists) {
         this.upsertArtist(artist);
 
-        // Fetch subsets in parallel
-        const [descRes, socialsRes, shopRes] = await Promise.all([
+        const [descRes, socialsRes, shopRes, latestRes] = await Promise.all([
           this.http.get<Description>(`/descriptions?artistId=${artist.id}`),
           this.http.get<Social[]>(`/socials?artistId=${artist.id}`),
           this.http.get<Shop>(`/shops?artistId=${artist.id}`),
+          this.http.get(`/music-platforms?latest=true&artistId=${artist.id}`),
         ]);
 
         const desc = descRes.status === 200 ? descRes.body : null;
         const socials = socialsRes.body || [];
         const shop = shopRes.status === 200 ? shopRes.body : null;
+        const latest = latestRes.status === 200 ? latestRes.body : null;
 
-        const insertTx = this.db.transaction(() => {
-          if (desc) {
-            this.upsertDescription(desc);
-            totalDescriptions++;
-          }
-
-          for (const s of socials) {
-            this.upsertSocial(s, artist.id);
-          }
-          totalSocials += socials.length;
-
-          if (shop) {
-            this.upsertShop(shop);
-            totalShops++;
-          }
+        const tx = this.db.transaction(() => {
+          if (desc) this.upsertDescription(desc);
+          for (const s of socials) this.upsertSocial(s, artist.id);
+          if (shop) this.upsertShop(shop);
+          if (latest) this.upsertLatestReleases(artist.id, latest);
         });
 
-        insertTx();
+        tx();
       }
 
-      console.log(
-        `[LocalDB] ✅ Synced clean database: ${artists.length} artists, ${totalDescriptions} descriptions, ${totalSocials} socials, ${totalShops} shops`
-      );
+      console.log('[LocalDB] Sync completed ✓');
     } catch (err: any) {
-      console.warn(`[LocalDB] ❌ Sync failed: ${err.message}`);
+      console.warn('[LocalDB] Sync failed:', err.message);
     }
   }
 
-  // 🔁 Schedule background sync
+  // --- SYNC SCHEDULER ---
   private startSyncSchedule() {
-    const runSync = async () => {
+    const run = async () => {
       if (this.syncing) return;
       this.syncing = true;
       await this.fetchAndStoreAll();
       this.syncing = false;
-      setTimeout(runSync, this.syncIntervalMs);
+      setTimeout(run, this.syncIntervalMs);
     };
-    setTimeout(runSync, this.syncIntervalMs);
+    setTimeout(run, this.syncIntervalMs);
   }
 
-  // 🧩 Upsert helpers
+  // --- UPSERT HELPERS ---
   private upsertArtist(artist: Artist) {
-    const stmt = this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO artists (id, name, type, website, webmail_url, webmail_email, webmail_password, logos, favicons)
       VALUES (@id, @name, @type, @website, @webmail_url, @webmail_email, @webmail_password, @logos, @favicons)
       ON CONFLICT(id) DO UPDATE SET
@@ -243,33 +247,39 @@ export class LocalDatabase {
         webmail_password=excluded.webmail_password,
         logos=excluded.logos,
         favicons=excluded.favicons
-    `);
-    stmt.run({
-      ...artist,
-      webmail_url: artist.webmail?.url || '',
-      webmail_email: artist.webmail?.email || '',
-      webmail_password: artist.webmail?.password || '',
-      logos: JSON.stringify(artist.logos),
-      favicons: JSON.stringify(artist.favicons),
-    });
+    `
+      )
+      .run({
+        ...artist,
+        webmail_url: artist.webmail?.url || '',
+        webmail_email: artist.webmail?.email || '',
+        webmail_password: artist.webmail?.password || '',
+        logos: JSON.stringify(artist.logos),
+        favicons: JSON.stringify(artist.favicons),
+      });
   }
 
   private upsertDescription(desc: Description) {
-    const stmt = this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO descriptions (id, artistId, description, imageGallery)
       VALUES (@id, @artistId, @description, @imageGallery)
       ON CONFLICT(id) DO UPDATE SET
         description=excluded.description,
         imageGallery=excluded.imageGallery
-    `);
-    stmt.run({
-      ...desc,
-      imageGallery: JSON.stringify(desc.imageGallery),
-    });
+    `
+      )
+      .run({
+        ...desc,
+        imageGallery: JSON.stringify(desc.imageGallery),
+      });
   }
 
   private upsertShop(shop: Shop) {
-    const stmt = this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO shops (id, artistId, name, website, imageGallery, shopFeed)
       VALUES (@id, @artistId, @name, @website, @imageGallery, @shopFeed)
       ON CONFLICT(id) DO UPDATE SET
@@ -277,38 +287,59 @@ export class LocalDatabase {
         website=excluded.website,
         imageGallery=excluded.imageGallery,
         shopFeed=excluded.shopFeed
-    `);
-    stmt.run({
-      ...shop,
-      imageGallery: JSON.stringify(shop.imageGallery),
-    });
+    `
+      )
+      .run({
+        ...shop,
+        imageGallery: JSON.stringify(shop.imageGallery),
+      });
   }
 
   private upsertSocial(social: Social, artistId: string) {
-    const stmt = this.db.prepare(`
-      INSERT INTO socials (id, artistId, name, description, url, originalUrl, socialLabelsList)
-      VALUES (@id, @artistId, @name, @description, @url, @originalUrl, @socialLabelsList)
+    this.db
+      .prepare(
+        `
+      INSERT INTO socials (id, artistId, name, description, url)
+      VALUES (@id, @artistId, @name, @description, @url)
       ON CONFLICT(id) DO UPDATE SET
         name=excluded.name,
         description=excluded.description,
-        url=excluded.url,
-        originalUrl=excluded.originalUrl,
-        socialLabelsList=excluded.socialLabelsList
-    `);
-    stmt.run({
-      ...social,
-      artistId,
-      socialLabelsList: JSON.stringify(social.socialLabelsList),
-    });
+        url=excluded.url
+    `
+      )
+      .run({
+        ...social,
+        artistId,
+      });
   }
 
-  // 🔍 Query helpers
+  private upsertLatestReleases(artistId: string, latest: any) {
+    this.db
+      .prepare(
+        `
+      INSERT INTO latest_releases (artistId, youtube, spotify)
+      VALUES (@artistId, @youtube, @spotify)
+      ON CONFLICT(artistId) DO UPDATE SET
+        youtube = excluded.youtube,
+        spotify = excluded.spotify
+    `
+      )
+      .run({
+        artistId,
+        youtube: JSON.stringify(latest.youtube),
+        spotify: JSON.stringify(latest.spotify),
+      });
+  }
+
+  // --- QUERY HELPERS ---
   public getArtistByWebsite(host: string): Artist | null {
-    const cleanHost = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const clean = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
     const row = this.db
-      .prepare('SELECT * FROM artists WHERE website LIKE ?')
-      .get(`%${cleanHost}%`) as ArtistRow | undefined;
+      .prepare(`SELECT * FROM artists WHERE website LIKE ?`)
+      .get(`%${clean}%`) as ArtistRow;
+
     if (!row) return null;
+
     return {
       id: row.id,
       name: row.name,
@@ -326,9 +357,11 @@ export class LocalDatabase {
 
   public getDescription(artistId: string): Description | null {
     const row = this.db
-      .prepare('SELECT * FROM descriptions WHERE artistId = ?')
-      .get(artistId) as DescriptionRow | undefined;
+      .prepare(`SELECT * FROM descriptions WHERE artistId = ?`)
+      .get(artistId) as DescriptionRow;
+
     if (!row) return null;
+
     return {
       id: row.id,
       artistId: row.artistId,
@@ -339,20 +372,33 @@ export class LocalDatabase {
 
   public getSocials(artistId: string): Social[] {
     const rows = this.db
-      .prepare('SELECT * FROM socials WHERE artistId = ?')
+      .prepare(`SELECT * FROM socials WHERE artistId = ?`)
       .all(artistId) as SocialRow[];
+
     return rows.map((r) => ({
       id: r.id,
       name: r.name,
       description: r.description,
       url: r.url,
-      originalUrl: r.originalUrl,
-      socialLabelsList: JSON.parse(r.socialLabelsList || '[]'),
     }));
   }
 
+  public getLatestReleases(artistId: string) {
+    const row = this.db
+      .prepare(`SELECT * FROM latest_releases WHERE artistId = ?`)
+      .get(artistId) as LatestReleasesRow;
+
+    if (!row) return null;
+
+    return {
+      youtube: JSON.parse(row.youtube || 'null'),
+      spotify: JSON.parse(row.spotify || 'null'),
+    };
+  }
+
   public getAllArtists(): Artist[] {
-    const rows = this.db.prepare('SELECT * FROM artists').all() as ArtistRow[];
+    const rows = this.db.prepare(`SELECT * FROM artists`).all() as ArtistRow[];
+
     return rows.map((row) => ({
       id: row.id,
       name: row.name,

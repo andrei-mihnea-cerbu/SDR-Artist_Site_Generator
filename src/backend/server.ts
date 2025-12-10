@@ -140,7 +140,13 @@ app.get('/info', async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({ artist, description, socials });
+    const latestReleases = db.getLatestReleases(artist.id);
+    if (!latestReleases) {
+      res.status(404).json({ error: 'Latest releases not found' });
+      return;
+    }
+
+    res.status(200).json({ artist, description, socials, latestReleases });
   } catch (error) {
     console.error('❌ Failed to get artist info:', error);
     res.status(500).json({ error: 'Internal server error' });

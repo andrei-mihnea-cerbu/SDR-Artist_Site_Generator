@@ -1,3 +1,5 @@
+// STARTING FROM YOUR EXACT LAST VERSION:
+
 import { useEffect, useState } from 'react';
 import {
   Box,
@@ -22,10 +24,7 @@ import { Social } from '../interfaces/social';
 import { InfoResponse } from '../interfaces/info';
 import { ColorEngineInstance } from '../utils/color_engine';
 
-// =====================================================
 // ICON HELPERS
-// =====================================================
-
 const createSimpleIcon = (icon: any) => {
   if (!icon) return null;
   return (
@@ -53,33 +52,19 @@ const getPlatformIcon = (s: Social) => {
   if (name.includes('youtube') || url.includes('youtu'))
     return createSimpleIcon(simpleIcons.siYoutube);
   if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
-
-  if (name.includes('music'))
-    return <MusicNoteIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
-
-  if (name.includes('instagram'))
-    return createSimpleIcon(simpleIcons.siInstagram);
-  if (name.includes('facebook'))
-    return createSimpleIcon(simpleIcons.siFacebook);
-
+  if (name.includes('music')) return <MusicNoteIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
+  if (name.includes('instagram')) return createSimpleIcon(simpleIcons.siInstagram);
+  if (name.includes('facebook')) return createSimpleIcon(simpleIcons.siFacebook);
   if (name.includes('patreon')) return createSimpleIcon(simpleIcons.siPatreon);
   if (name.includes('paypal')) return createSimpleIcon(simpleIcons.siPaypal);
-  if (name.includes('gofundme'))
-    return createSimpleIcon(simpleIcons.siGofundme);
-
-  if (name.includes('website') || name.includes('site'))
-    return <LanguageIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
-
-  if (name.includes('merch'))
-    return <StorefrontIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
+  if (name.includes('gofundme')) return createSimpleIcon(simpleIcons.siGofundme);
+  if (name.includes('website') || name.includes('site')) return <LanguageIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
+  if (name.includes('merch')) return <StorefrontIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
 
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
 
-// =====================================================
 // MAIN COMPONENT
-// =====================================================
-
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
@@ -96,18 +81,13 @@ export default function HomePage() {
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
   const [fadeIn, setFadeIn] = useState(false);
 
-  // =====================================================
-  // LOAD INFO
-  // =====================================================
   useEffect(() => {
     const load = async () => {
       try {
         const { data } = await axios.get<InfoResponse>(`/info`);
 
         setArtist(data.artist);
-        setSocials(
-          data.socials.slice().sort((a, b) => a.name.localeCompare(b.name))
-        );
+        setSocials(data.socials.slice().sort((a, b) => a.name.localeCompare(b.name)));
         setLatest(data.latestReleases);
 
         if (data.description.imageGallery.length > 0) {
@@ -150,16 +130,8 @@ export default function HomePage() {
     );
 
   return (
-    <Box
-      sx={{
-        minHeight: '100dvh',
-        position: 'relative',
-        overflowX: 'hidden',
-      }}
-    >
-      {/* ===================================================== */}
-      {/* BLURRED BACKGROUND + KEN BURNS */}
-      {/* ===================================================== */}
+    <Box sx={{ minHeight: '100dvh', position: 'relative', overflowX: 'hidden' }}>
+      {/* BACKGROUND IMAGE */}
       {photoUrl && (
         <Box
           sx={{
@@ -173,12 +145,6 @@ export default function HomePage() {
             animation: 'kenburns 22s ease-in-out infinite',
             zIndex: -2,
             pointerEvents: 'none',
-
-            '@keyframes kenburns': {
-              '0%': { transform: 'scale(1.08)' },
-              '50%': { transform: 'scale(1.13)' },
-              '100%': { transform: 'scale(1.08)' },
-            },
           }}
         />
       )}
@@ -194,18 +160,8 @@ export default function HomePage() {
         }}
       />
 
-      {/* ===================================================== */}
-      {/* MAIN PAGE CONTENT */}
-      {/* ===================================================== */}
       <Fade in={fadeIn} timeout={700}>
-        <Box
-          sx={{
-            mx: 'auto',
-            pt: 4,
-            pb: 10,
-            px: 2,
-          }}
-        >
+        <Box sx={{ mx: 'auto', pt: 4, pb: 10, px: 2 }}>
           {/* TITLE */}
           <Box
             sx={{
@@ -226,18 +182,14 @@ export default function HomePage() {
             </Typography>
           </Box>
 
-          {/* ===================================================== */}
-          {/* GRID LAYOUT */}
-          {/* ===================================================== */}
+          {/* GRID */}
           <Grid container spacing={4}>
-            {/* LEFT COLUMN — SOCIALS */}
-            <Grid
-              size={{ xs: 12, md: 4 }}
-              sx={{ display: 'flex', justifyContent: 'center' }}
-            >
+            {/* LEFT SOCIALS: MAKE WIDER */}
+            <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', justifyContent: 'center' }}>
               <Box
                 sx={{
-                  width: '90%', // wider socials
+                  width: '100%',
+                  maxWidth: 500,
                   bgcolor: panelColor,
                   color: textColor,
                   p: 2,
@@ -277,8 +229,8 @@ export default function HomePage() {
               </Box>
             </Grid>
 
-            {/* RIGHT COLUMN — LATEST RELEASES */}
-            <Grid size={{ xs: 12, md: 8 }}>
+            {/* RIGHT COLUMN (LATEST RELEASES) */}
+            <Grid size={{ xs: 12, md: 7 }}>
               {latest && (
                 <Box
                   sx={{
@@ -309,10 +261,7 @@ export default function HomePage() {
                   <Grid container spacing={3}>
                     {/* YOUTUBE */}
                     {latest.youtube && (
-                      <Grid
-                        size={{ xs: 12 }}
-                        sx={{ display: 'flex', justifyContent: 'center' }}
-                      >
+                      <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'center' }}>
                         <Box
                           sx={{
                             width: '100%',
@@ -327,13 +276,12 @@ export default function HomePage() {
                             flexDirection: 'column',
                           }}
                         >
-                          {/* 1:1 IMAGE */}
+                          {/* IMAGE WITHOUT 1/1 RATIO */}
                           <Box
                             sx={{
                               width: '100%',
-                              aspectRatio: '1 / 1',
-                              overflow: 'hidden',
                               borderRadius: 3,
+                              overflow: 'hidden',
                               mb: 2,
                             }}
                           >
@@ -341,7 +289,7 @@ export default function HomePage() {
                               src={latest.youtube.thumbnailUrl}
                               style={{
                                 width: '100%',
-                                height: '100%',
+                                height: 'auto',
                                 objectFit: 'cover',
                                 display: 'block',
                               }}
@@ -352,19 +300,14 @@ export default function HomePage() {
                             📺 YouTube Release
                           </Typography>
 
-                          <Typography variant="body2">
-                            {latest.youtube.title}
-                          </Typography>
+                          <Typography variant="body2">{latest.youtube.title}</Typography>
                         </Box>
                       </Grid>
                     )}
 
                     {/* SPOTIFY */}
                     {latest.spotify && (
-                      <Grid
-                        size={{ xs: 12 }}
-                        sx={{ display: 'flex', justifyContent: 'center' }}
-                      >
+                      <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'center' }}>
                         <Box
                           sx={{
                             width: '100%',
@@ -375,18 +318,16 @@ export default function HomePage() {
                             p: 2,
                             textAlign: 'center',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
-                            minHeight: 620,
                             display: 'flex',
                             flexDirection: 'column',
                           }}
                         >
-                          {/* 1:1 IMAGE */}
+                          {/* IMAGE WITHOUT 1/1 RATIO */}
                           <Box
                             sx={{
                               width: '100%',
-                              aspectRatio: '1 / 1',
-                              overflow: 'hidden',
                               borderRadius: 3,
+                              overflow: 'hidden',
                               mb: 2,
                             }}
                           >
@@ -394,7 +335,7 @@ export default function HomePage() {
                               src={latest.spotify.imageUrl}
                               style={{
                                 width: '100%',
-                                height: '100%',
+                                height: 'auto',
                                 objectFit: 'cover',
                                 display: 'block',
                               }}
@@ -405,9 +346,7 @@ export default function HomePage() {
                             🎵 Spotify Release
                           </Typography>
 
-                          <Typography variant="body2">
-                            {latest.spotify.name}
-                          </Typography>
+                          <Typography variant="body2">{latest.spotify.name}</Typography>
                         </Box>
                       </Grid>
                     )}

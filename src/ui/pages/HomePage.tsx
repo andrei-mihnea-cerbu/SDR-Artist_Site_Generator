@@ -165,13 +165,12 @@ export default function HomePage() {
           <Grid container spacing={4}>
             {/* SOCIALS */}
             <Grid
-              size={{ xs: 12, md: 5 }}
+              size={{ xs: 12, md: 'auto' }}
               sx={{ display: 'flex', justifyContent: 'center' }}
             >
               <Box
                 sx={{
-                  width: '100%',
-                  maxWidth: 500,
+                  width: { xs: '100%', md: 440 }, // FIXED WIDTH ON DESKTOP
                   bgcolor: panelColor,
                   color: textColor,
                   p: 2,

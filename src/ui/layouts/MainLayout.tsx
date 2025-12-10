@@ -49,7 +49,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             backgroundImage: `url(${photoUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'blur(6px) brightness(0.65)',
+            filter: 'blur(6px) brightness(0.45)',
             transform: 'scale(1.1)',
             animation: 'kenburns 22s ease-in-out infinite',
             zIndex: 1,

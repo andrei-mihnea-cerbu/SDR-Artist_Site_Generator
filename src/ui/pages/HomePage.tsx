@@ -156,7 +156,9 @@ export default function HomePage() {
         overflowX: 'hidden',
       }}
     >
-      {/* BACKGROUND IMAGE */}
+      {/* ===================================================== */}
+      {/* BACKGROUND IMAGE — NOW ZINDEX 1 */}
+      {/* ===================================================== */}
       {photoUrl && (
         <Box
           sx={{
@@ -168,7 +170,7 @@ export default function HomePage() {
             filter: 'blur(6px) brightness(0.65)',
             transform: 'scale(1.1)',
             animation: 'kenburns 22s ease-in-out infinite',
-            zIndex: -2,
+            zIndex: 1,
             pointerEvents: 'none',
 
             '@keyframes kenburns': {
@@ -180,20 +182,33 @@ export default function HomePage() {
         />
       )}
 
-      {/* OVERLAY */}
+      {/* ===================================================== */}
+      {/* OVERLAY — ALSO ZINDEX 1 */}
+      {/* ===================================================== */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
           bgcolor: 'rgba(0,0,0,0.45)',
-          zIndex: -1,
+          zIndex: 1,
           pointerEvents: 'none',
         }}
       />
 
-      {/* MAIN CONTENT */}
+      {/* ===================================================== */}
+      {/* MAIN CONTENT — NOW ZINDEX 2 */}
+      {/* ===================================================== */}
       <Fade in={fadeIn} timeout={700}>
-        <Box sx={{ mx: 'auto', pt: 4, pb: 10, px: 2 }}>
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 2,
+            mx: 'auto',
+            pt: 4,
+            pb: 10,
+            px: 2,
+          }}
+        >
           {/* TITLE */}
           <Box
             sx={{
@@ -214,9 +229,11 @@ export default function HomePage() {
             </Typography>
           </Box>
 
-          {/* GRID */}
+          {/* ===================================================== */}
+          {/* GRID LAYOUT */}
+          {/* ===================================================== */}
           <Grid container spacing={4}>
-            {/* LEFT SOCIALS — WIDER ON DESKTOP */}
+            {/* LEFT COLUMN — SOCIALS */}
             <Grid
               size={{ xs: 12, md: 5 }}
               sx={{ display: 'flex', justifyContent: 'center' }}
@@ -264,7 +281,9 @@ export default function HomePage() {
               </Box>
             </Grid>
 
+            {/* ===================================================== */}
             {/* RIGHT COLUMN — RELEASES */}
+            {/* ===================================================== */}
             <Grid size={{ xs: 12, md: 7 }}>
               {latest && (
                 <Box

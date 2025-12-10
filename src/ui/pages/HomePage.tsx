@@ -55,7 +55,8 @@ const getPlatformIcon = (s: Social) => {
     return createSimpleIcon(simpleIcons.siYoutube);
   if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
 
-  if (name.includes('music')) return <MusicNoteIcon sx={{ fontSize: { xs: 22, md: 28 } }} />;
+  if (name.includes('music'))
+    return <MusicNoteIcon sx={{ fontSize: { xs: 22, md: 28 } }} />;
 
   if (name.includes('instagram'))
     return createSimpleIcon(simpleIcons.siInstagram);
@@ -168,7 +169,6 @@ export default function HomePage() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: 'blur(5px) brightness(0.6)',
-            animation: 'kenburns 20s ease-in-out infinite',
             transform: 'scale(1.08)',
             zIndex: -2,
             '@keyframes kenburns': {
@@ -234,11 +234,14 @@ export default function HomePage() {
           {/* ===================================================== */}
           <Grid container spacing={4}>
             {/* LEFT COLUMN — SOCIALS */}
-            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Grid
+              size={{ xs: 12, md: 4 }}
+              sx={{ display: 'flex', justifyContent: 'center' }}
+            >
               <Box
                 sx={{
                   width: '100%',
-                  maxWidth: 460,   // ⬅ bigger on desktop
+                  maxWidth: 460,
                   bgcolor: panelColor,
                   color: textColor,
                   p: 2,
@@ -258,7 +261,7 @@ export default function HomePage() {
                         sx={{
                           py: { xs: 1.6, md: 1.8 },
                           borderRadius: 2,
-                          fontSize: { xs: 16, md: 20 }, // ⬅ text bigger on desktop
+                          fontSize: { xs: 16, md: 20 },
                           justifyContent: 'center',
                           gap: { xs: 1.5, md: 2 },
                           textTransform: 'none',
@@ -289,6 +292,9 @@ export default function HomePage() {
                     borderRadius: 4,
                     p: 3,
                     boxShadow: '0 0 20px rgba(0,0,0,0.35)',
+                    width: '100%',
+                    maxWidth: 560,          // ⬅ shrink the whole releases panel
+                    mx: { xs: 'auto', md: 0 },
                   }}
                 >
                   <Typography
@@ -321,7 +327,14 @@ export default function HomePage() {
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box sx={{ aspectRatio: '1/1', mb: 2 }}>
+                          <Box
+                            sx={{
+                              aspectRatio: '1/1',
+                              mb: 2,
+                              maxWidth: 260,   // ⬅ smaller image
+                              mx: 'auto',
+                            }}
+                          >
                             <img
                               src={latest.youtube.thumbnailUrl}
                               style={{
@@ -356,7 +369,14 @@ export default function HomePage() {
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box sx={{ aspectRatio: '1/1', mb: 2 }}>
+                          <Box
+                            sx={{
+                              aspectRatio: '1/1',
+                              mb: 2,
+                              maxWidth: 260,   // ⬅ smaller image
+                              mx: 'auto',
+                            }}
+                          >
                             <img
                               src={latest.spotify.imageUrl}
                               style={{

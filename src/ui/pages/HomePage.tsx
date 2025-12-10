@@ -34,8 +34,8 @@ const createSimpleIcon = (icon: any) => {
       component="svg"
       viewBox="0 0 24 24"
       sx={{
-        width: { xs: 22, md: 28 },
-        height: { xs: 22, md: 28 },
+        width: { xs: 26, md: 32 },
+        height: { xs: 26, md: 32 },
         fill: `#${icon.hex}`,
       }}
     >
@@ -56,7 +56,7 @@ const getPlatformIcon = (s: Social) => {
   if (name.includes('tiktok')) return createSimpleIcon(simpleIcons.siTiktok);
 
   if (name.includes('music'))
-    return <MusicNoteIcon sx={{ fontSize: { xs: 22, md: 28 } }} />;
+    return <MusicNoteIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
 
   if (name.includes('instagram'))
     return createSimpleIcon(simpleIcons.siInstagram);
@@ -69,10 +69,10 @@ const getPlatformIcon = (s: Social) => {
     return createSimpleIcon(simpleIcons.siGofundme);
 
   if (name.includes('website') || name.includes('site'))
-    return <LanguageIcon sx={{ fontSize: { xs: 22, md: 28 } }} />;
+    return <LanguageIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
 
   if (name.includes('merch'))
-    return <StorefrontIcon sx={{ fontSize: { xs: 22, md: 28 } }} />;
+    return <StorefrontIcon sx={{ fontSize: { xs: 26, md: 32 } }} />;
 
   return createSimpleIcon(simpleIcons.siInternetarchive);
 };
@@ -106,7 +106,9 @@ export default function HomePage() {
         const { data } = await axios.get<InfoResponse>(`/info`);
 
         setArtist(data.artist);
-        setSocials(data.socials.slice().sort((a, b) => a.name.localeCompare(b.name)));
+        setSocials(
+          data.socials.slice().sort((a, b) => a.name.localeCompare(b.name))
+        );
         setLatest(data.latestReleases);
 
         if (data.description.imageGallery.length > 0) {
@@ -154,7 +156,7 @@ export default function HomePage() {
       sx={{
         minHeight: '100vh',
         position: 'relative',
-        overflow: 'hidden',
+        overflowX: 'hidden',
       }}
     >
       {/* ===================================================== */}
@@ -168,13 +170,14 @@ export default function HomePage() {
             backgroundImage: `url(${photoUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'blur(5px) brightness(0.6)',
-            transform: 'scale(1.08)',
+            filter: 'blur(4px) brightness(0.55)',
+            transform: 'scale(1.06)',
+            animation: 'kenburns 22s ease-in-out infinite',
             zIndex: -2,
             '@keyframes kenburns': {
-              '0%': { transform: 'scale(1.08)' },
+              '0%': { transform: 'scale(1.06)' },
               '50%': { transform: 'scale(1.12)' },
-              '100%': { transform: 'scale(1.08)' },
+              '100%': { transform: 'scale(1.06)' },
             },
           }}
         />
@@ -241,7 +244,7 @@ export default function HomePage() {
               <Box
                 sx={{
                   width: '100%',
-                  maxWidth: 460,
+                  maxWidth: 480,
                   bgcolor: panelColor,
                   color: textColor,
                   p: 2,
@@ -259,9 +262,9 @@ export default function HomePage() {
                         fullWidth
                         startIcon={getPlatformIcon(s)}
                         sx={{
-                          py: { xs: 1.6, md: 1.8 },
+                          py: { xs: 1.8, md: 2 },
                           borderRadius: 2,
-                          fontSize: { xs: 16, md: 20 },
+                          fontSize: { xs: 18, md: 22 },
                           justifyContent: 'center',
                           gap: { xs: 1.5, md: 2 },
                           textTransform: 'none',
@@ -292,9 +295,6 @@ export default function HomePage() {
                     borderRadius: 4,
                     p: 3,
                     boxShadow: '0 0 20px rgba(0,0,0,0.35)',
-                    width: '100%',
-                    maxWidth: 560,          // ⬅ shrink the whole releases panel
-                    mx: { xs: 'auto', md: 0 },
                   }}
                 >
                   <Typography
@@ -314,12 +314,14 @@ export default function HomePage() {
                     Latest Releases
                   </Typography>
 
-                  <Grid container spacing={3}>
-                    {/* YouTube */}
+                  <Grid container spacing={3} justifyContent="center">
+                    {/* YOUTUBE */}
                     {latest.youtube && (
                       <Grid size={{ xs: 12 }}>
                         <Box
                           sx={{
+                            width: { xs: '92%', md: 500 },
+                            mx: 'auto',
                             background: '#ffffff18',
                             borderRadius: 3,
                             p: 2,
@@ -329,10 +331,9 @@ export default function HomePage() {
                         >
                           <Box
                             sx={{
-                              aspectRatio: '1/1',
+                              width: '100%',
+                              aspectRatio: '1 / 1',
                               mb: 2,
-                              maxWidth: 260,   // ⬅ smaller image
-                              mx: 'auto',
                             }}
                           >
                             <img
@@ -341,7 +342,7 @@ export default function HomePage() {
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                borderRadius: 3,
+                                borderRadius: 6,
                               }}
                             />
                           </Box>
@@ -357,11 +358,13 @@ export default function HomePage() {
                       </Grid>
                     )}
 
-                    {/* Spotify */}
+                    {/* SPOTIFY */}
                     {latest.spotify && (
                       <Grid size={{ xs: 12 }}>
                         <Box
                           sx={{
+                            width: { xs: '92%', md: 500 },
+                            mx: 'auto',
                             background: '#ffffff18',
                             borderRadius: 3,
                             p: 2,
@@ -371,10 +374,9 @@ export default function HomePage() {
                         >
                           <Box
                             sx={{
-                              aspectRatio: '1/1',
+                              width: '100%',
+                              aspectRatio: '1 / 1',
                               mb: 2,
-                              maxWidth: 260,   // ⬅ smaller image
-                              mx: 'auto',
                             }}
                           >
                             <img
@@ -383,7 +385,7 @@ export default function HomePage() {
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                borderRadius: 3,
+                                borderRadius: 6,
                               }}
                             />
                           </Box>

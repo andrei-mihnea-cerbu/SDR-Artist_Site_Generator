@@ -123,7 +123,6 @@ export default function HomePage() {
             setButtonTextColor(palette.buttonTextColor);
           }
         }
-      } catch {
       } finally {
         setLoading(false);
         setTimeout(() => setFadeIn(true), 150);
@@ -171,6 +170,12 @@ export default function HomePage() {
             animation: 'kenburns 22s ease-in-out infinite',
             zIndex: -2,
             pointerEvents: 'none',
+
+            '@keyframes kenburns': {
+              '0%': { transform: 'scale(1.08)' },
+              '50%': { transform: 'scale(1.13)' },
+              '100%': { transform: 'scale(1.08)' },
+            },
           }}
         />
       )}
@@ -186,16 +191,9 @@ export default function HomePage() {
         }}
       />
 
-      {/* MAIN PAGE CONTENT */}
+      {/* MAIN CONTENT */}
       <Fade in={fadeIn} timeout={700}>
-        <Box
-          sx={{
-            mx: 'auto',
-            pt: 4,
-            pb: 10,
-            px: 2,
-          }}
-        >
+        <Box sx={{ mx: 'auto', pt: 4, pb: 10, px: 2 }}>
           {/* TITLE */}
           <Box
             sx={{
@@ -216,9 +214,9 @@ export default function HomePage() {
             </Typography>
           </Box>
 
-          {/* GRID LAYOUT */}
+          {/* GRID */}
           <Grid container spacing={4}>
-            {/* LEFT COLUMN — SOCIALS */}
+            {/* LEFT SOCIALS — WIDER ON DESKTOP */}
             <Grid
               size={{ xs: 12, md: 5 }}
               sx={{ display: 'flex', justifyContent: 'center' }}
@@ -266,7 +264,7 @@ export default function HomePage() {
               </Box>
             </Grid>
 
-            {/* RIGHT COLUMN — LATEST RELEASES */}
+            {/* RIGHT COLUMN — RELEASES */}
             <Grid size={{ xs: 12, md: 7 }}>
               {latest && (
                 <Box
@@ -296,7 +294,9 @@ export default function HomePage() {
                   </Typography>
 
                   <Grid container spacing={3}>
+                    {/* ============================= */}
                     {/* YOUTUBE CARD */}
+                    {/* ============================= */}
                     {latest.youtube && (
                       <Grid
                         size={{ xs: 12 }}
@@ -324,6 +324,8 @@ export default function HomePage() {
                               flexDirection: 'column',
                               cursor: 'pointer',
                               transition: 'transform 0.2s',
+                              color: textColor,
+                              '& *': { color: textColor },
                               '&:hover': { transform: 'scale(1.03)' },
                             }}
                           >
@@ -358,7 +360,9 @@ export default function HomePage() {
                       </Grid>
                     )}
 
+                    {/* ============================= */}
                     {/* SPOTIFY CARD */}
+                    {/* ============================= */}
                     {latest.spotify && (
                       <Grid
                         size={{ xs: 12 }}
@@ -386,6 +390,8 @@ export default function HomePage() {
                               flexDirection: 'column',
                               cursor: 'pointer',
                               transition: 'transform 0.2s',
+                              color: textColor,
+                              '& *': { color: textColor },
                               '&:hover': { transform: 'scale(1.03)' },
                             }}
                           >

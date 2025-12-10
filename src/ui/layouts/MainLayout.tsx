@@ -7,6 +7,7 @@ import { ColorEngineInstance } from '../utils/color_engine';
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
 
   const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
 
@@ -20,11 +21,13 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           const full = `${bucket}/${rel}`;
           setPhotoUrl(full);
 
-          // Optional: load palette (not used here, but keeps logic consistent)
           await ColorEngineInstance.extractPalette(full);
         }
       } finally {
         setLoading(false);
+
+        // Trigger fade-in slightly after load
+        setTimeout(() => setFadeIn(true), 100);
       }
     };
 
@@ -34,17 +37,19 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <Box sx={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
       {/* ===================================================== */}
-      {/* BACKGROUND IMAGE — now fully visible, no overlay */}
+      {/* BACKGROUND IMAGE — fades in + kenburns */}
       {/* ===================================================== */}
       {photoUrl && (
         <Box
           sx={{
             position: 'fixed',
             inset: 0,
+            opacity: fadeIn ? 1 : 0, // fade animation
+            transition: 'opacity 1.3s ease-in-out', // smooth fade
             backgroundImage: `url(${photoUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'blur(6px) brightness(0.85)', // slightly brightened since overlay removed
+            filter: 'blur(6px) brightness(0.65)',
             transform: 'scale(1.1)',
             animation: 'kenburns 22s ease-in-out infinite',
             zIndex: 1,
@@ -60,7 +65,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       )}
 
       {/* ===================================================== */}
-      {/* PAGE CONTENT — zIndex: 2 */}
+      {/* FOREGROUND CONTENT — zIndex 2 */}
       {/* ===================================================== */}
       <Box
         sx={{

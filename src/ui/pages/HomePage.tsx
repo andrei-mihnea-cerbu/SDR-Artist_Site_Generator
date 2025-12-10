@@ -109,7 +109,7 @@ export default function HomePage() {
         );
         setLatest(data.latestReleases);
 
-        // Use image for color palette only (background now handled by MainLayout)
+        // Use image for color palette only (background handled by MainLayout)
         if (data.description.imageGallery.length > 0) {
           const rel = encodeURI(data.description.imageGallery[0]);
           const full = `${bucket}/${rel}`;
@@ -133,15 +133,31 @@ export default function HomePage() {
 
   if (loading)
     return (
-      <>
+      <Box
+        sx={{
+          height: '100dvh',
+          color: '#fff',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <CircularProgress color="inherit" />
-      </>
+      </Box>
     );
 
   return (
     <>
       <Fade in={fadeIn} timeout={700}>
-        <Box sx={{ mx: 'auto', pt: 4, pb: 10, px: 2 }}>
+        <Box
+          sx={{
+            mx: 'auto',
+            pt: 4,
+            pb: 10,
+            px: 2,
+            maxWidth: 1300, // central constraint so desktop behaves consistently
+          }}
+        >
           {/* TITLE */}
           <Box
             sx={{
@@ -162,15 +178,16 @@ export default function HomePage() {
           </Box>
 
           {/* GRID */}
-          <Grid container spacing={4}>
-            {/* SOCIALS */}
+          <Grid container spacing={4} alignItems="flex-start">
+            {/* SOCIALS COLUMN */}
             <Grid
-              size={{ xs: 12, md: 'auto' }}
+              size={{ xs: 12, md: 4 }}
               sx={{ display: 'flex', justifyContent: 'center' }}
             >
               <Box
                 sx={{
-                  width: { xs: '100%', md: 440 }, // FIXED WIDTH ON DESKTOP
+                  width: '100%',
+                  maxWidth: { xs: '100%', md: 460 }, // stable desktop width
                   bgcolor: panelColor,
                   color: textColor,
                   p: 2,
@@ -191,6 +208,9 @@ export default function HomePage() {
                           py: { xs: 1.8, md: 2 },
                           borderRadius: 2,
                           fontSize: { xs: 18, md: 22 },
+                          justifyContent: 'center',
+                          gap: { xs: 1.5, md: 2.5 },
+                          textTransform: 'none',
                           background: buttonColor,
                           color: buttonTextColor,
                           '&:hover': {
@@ -207,8 +227,8 @@ export default function HomePage() {
               </Box>
             </Grid>
 
-            {/* LATEST RELEASES */}
-            <Grid size={{ xs: 12, md: 7 }}>
+            {/* LATEST RELEASES COLUMN */}
+            <Grid size={{ xs: 12, md: 8 }}>
               {latest && (
                 <Box
                   sx={{
@@ -237,6 +257,7 @@ export default function HomePage() {
                   </Typography>
 
                   <Grid container spacing={3}>
+                    {/* YOUTUBE CARD */}
                     {latest.youtube && (
                       <Grid
                         size={{ xs: 12 }}
@@ -260,18 +281,20 @@ export default function HomePage() {
                               p: 2,
                               textAlign: 'center',
                               boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              cursor: 'pointer',
                               transition: 'transform 0.2s',
                               color: textColor,
                               '& *': { color: textColor },
-                              cursor: 'pointer',
                               '&:hover': { transform: 'scale(1.03)' },
                             }}
                           >
                             <Box
                               sx={{
                                 width: '100%',
-                                borderRadius: 3,
                                 overflow: 'hidden',
+                                borderRadius: 3,
                                 mb: 2,
                               }}
                             >
@@ -281,13 +304,15 @@ export default function HomePage() {
                                   width: '100%',
                                   height: 'auto',
                                   objectFit: 'cover',
+                                  display: 'block',
                                 }}
                               />
                             </Box>
 
-                            <Typography fontWeight={700}>
+                            <Typography fontWeight={700} sx={{ mb: 1 }}>
                               📺 YouTube Release
                             </Typography>
+
                             <Typography variant="body2">
                               {latest.youtube.title}
                             </Typography>
@@ -296,6 +321,7 @@ export default function HomePage() {
                       </Grid>
                     )}
 
+                    {/* SPOTIFY CARD */}
                     {latest.spotify && (
                       <Grid
                         size={{ xs: 12 }}
@@ -319,18 +345,20 @@ export default function HomePage() {
                               p: 2,
                               textAlign: 'center',
                               boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              cursor: 'pointer',
                               transition: 'transform 0.2s',
                               color: textColor,
                               '& *': { color: textColor },
-                              cursor: 'pointer',
                               '&:hover': { transform: 'scale(1.03)' },
                             }}
                           >
                             <Box
                               sx={{
                                 width: '100%',
-                                borderRadius: 3,
                                 overflow: 'hidden',
+                                borderRadius: 3,
                                 mb: 2,
                               }}
                             >
@@ -340,13 +368,15 @@ export default function HomePage() {
                                   width: '100%',
                                   height: 'auto',
                                   objectFit: 'cover',
+                                  display: 'block',
                                 }}
                               />
                             </Box>
 
-                            <Typography fontWeight={700}>
+                            <Typography fontWeight={700} sx={{ mb: 1 }}>
                               🎵 Spotify Release
                             </Typography>
+
                             <Typography variant="body2">
                               {latest.spotify.name}
                             </Typography>

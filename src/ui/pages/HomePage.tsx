@@ -8,6 +8,7 @@ import {
   SvgIcon,
   Fade,
   Grid,
+  Container,
 } from '@mui/material';
 import axios from 'axios';
 
@@ -109,7 +110,6 @@ export default function HomePage() {
         );
         setLatest(data.latestReleases);
 
-        // Use image for color palette only (background handled by MainLayout)
         if (data.description.imageGallery.length > 0) {
           const rel = encodeURI(data.description.imageGallery[0]);
           const full = `${bucket}/${rel}`;
@@ -147,250 +147,240 @@ export default function HomePage() {
     );
 
   return (
-    <>
-      <Fade in={fadeIn} timeout={700}>
+    <Fade in={fadeIn} timeout={700}>
+      <Container maxWidth="lg" sx={{ pt: 4, pb: 10 }}>
+        {/* TITLE */}
         <Box
           sx={{
             mx: 'auto',
-            pt: 4,
-            pb: 10,
-            px: 2,
-            maxWidth: 1300, // central constraint so desktop behaves consistently
+            mb: 4,
+            p: 2,
+            maxWidth: 600,
+            textAlign: 'center',
+            borderRadius: 4,
+            background: panelColor,
+            color: textColor,
+            boxShadow: '0 0 25px rgba(0,0,0,0.35)',
           }}
         >
-          {/* TITLE */}
-          <Box
-            sx={{
-              mx: 'auto',
-              mb: 4,
-              p: 2,
-              maxWidth: 600,
-              textAlign: 'center',
-              borderRadius: 4,
-              background: panelColor,
-              color: textColor,
-              boxShadow: '0 0 25px rgba(0,0,0,0.35)',
-            }}
-          >
-            <Typography variant="h3" sx={{ fontWeight: 700 }}>
-              {artist?.name}
-            </Typography>
-          </Box>
+          <Typography variant="h3" sx={{ fontWeight: 700 }}>
+            {artist?.name}
+          </Typography>
+        </Box>
 
-          {/* GRID */}
-          <Grid container spacing={4} alignItems="flex-start">
-            {/* SOCIALS COLUMN */}
-            <Grid
-              size={{ xs: 12, md: 4 }}
-              sx={{ display: 'flex', justifyContent: 'center' }}
+        {/* GRID */}
+        <Grid container spacing={4} alignItems="flex-start">
+          {/* SOCIALS COLUMN */}
+          <Grid
+            size={{ xs: 12, md: 4 }}
+            sx={{ display: 'flex', justifyContent: 'center' }}
+          >
+            <Box
+              sx={{
+                width: '100%',
+                maxWidth: 460,
+                bgcolor: panelColor,
+                color: textColor,
+                p: 2,
+                borderRadius: 4,
+                boxShadow: '0 0 20px rgba(0,0,0,0.35)',
+              }}
             >
+              <Stack spacing={2}>
+                {socials.map((s, idx) => (
+                  <Fade key={s.id} in={fadeIn} timeout={500 + idx * 80}>
+                    <Button
+                      fullWidth
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      startIcon={getPlatformIcon(s)}
+                      sx={{
+                        py: { xs: 1.8, md: 2 },
+                        borderRadius: 2,
+                        fontSize: { xs: 18, md: 22 },
+                        justifyContent: 'center',
+                        gap: { xs: 1.5, md: 2.5 },
+                        textTransform: 'none',
+                        background: buttonColor,
+                        color: buttonTextColor,
+                        '&:hover': {
+                          transform: 'scale(1.03)',
+                          background: buttonColor + 'dd',
+                        },
+                      }}
+                    >
+                      {s.name}
+                    </Button>
+                  </Fade>
+                ))}
+              </Stack>
+            </Box>
+          </Grid>
+
+          {/* LATEST RELEASES COLUMN */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            {latest && (
               <Box
                 sx={{
-                  width: '100%',
-                  maxWidth: { xs: '100%', md: 460 }, // stable desktop width
-                  bgcolor: panelColor,
+                  background: panelColor,
                   color: textColor,
-                  p: 2,
                   borderRadius: 4,
+                  p: 3,
                   boxShadow: '0 0 20px rgba(0,0,0,0.35)',
                 }}
               >
-                <Stack spacing={2}>
-                  {socials.map((s, idx) => (
-                    <Fade key={s.id} in={fadeIn} timeout={500 + idx * 80}>
-                      <Button
-                        fullWidth
-                        href={s.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        startIcon={getPlatformIcon(s)}
-                        sx={{
-                          py: { xs: 1.8, md: 2 },
-                          borderRadius: 2,
-                          fontSize: { xs: 18, md: 22 },
-                          justifyContent: 'center',
-                          gap: { xs: 1.5, md: 2.5 },
-                          textTransform: 'none',
-                          background: buttonColor,
-                          color: buttonTextColor,
-                          '&:hover': {
-                            transform: 'scale(1.03)',
-                            background: buttonColor + 'dd',
-                          },
-                        }}
-                      >
-                        {s.name}
-                      </Button>
-                    </Fade>
-                  ))}
-                </Stack>
-              </Box>
-            </Grid>
-
-            {/* LATEST RELEASES COLUMN */}
-            <Grid size={{ xs: 12, md: 8 }}>
-              {latest && (
-                <Box
+                <Typography
+                  variant="h5"
                   sx={{
-                    background: panelColor,
-                    color: textColor,
-                    borderRadius: 4,
-                    p: 3,
-                    boxShadow: '0 0 20px rgba(0,0,0,0.35)',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    mb: 3,
+                    p: 1,
+                    borderRadius: 2,
+                    background: buttonColor,
+                    color: buttonTextColor,
+                    width: 'fit-content',
+                    mx: 'auto',
                   }}
                 >
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      mb: 3,
-                      p: 1,
-                      borderRadius: 2,
-                      background: buttonColor,
-                      color: buttonTextColor,
-                      width: 'fit-content',
-                      mx: 'auto',
-                    }}
-                  >
-                    Latest Releases
-                  </Typography>
+                  Latest Releases
+                </Typography>
 
-                  <Grid container spacing={3}>
-                    {/* YOUTUBE CARD */}
-                    {latest.youtube && (
-                      <Grid
-                        size={{ xs: 12 }}
-                        sx={{ display: 'flex', justifyContent: 'center' }}
+                <Grid container spacing={3}>
+                  {/* YOUTUBE CARD */}
+                  {latest.youtube && (
+                    <Grid
+                      size={{ xs: 12 }}
+                      sx={{ display: 'flex', justifyContent: 'center' }}
+                    >
+                      <a
+                        href={`https://www.youtube.com/watch?v=${latest.youtube.videoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          textDecoration: 'none',
+                          width: '100%',
+                          maxWidth: 420,
+                        }}
                       >
-                        <a
-                          href={`https://www.youtube.com/watch?v=${latest.youtube.videoId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            textDecoration: 'none',
+                        <Box
+                          sx={{
                             width: '100%',
-                            maxWidth: 420,
+                            background: '#ffffff18',
+                            borderRadius: 3,
+                            p: 2,
+                            textAlign: 'center',
+                            boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            color: textColor,
+                            '& *': { color: textColor },
+                            '&:hover': { transform: 'scale(1.03)' },
                           }}
                         >
                           <Box
                             sx={{
                               width: '100%',
-                              background: '#ffffff18',
+                              overflow: 'hidden',
                               borderRadius: 3,
-                              p: 2,
-                              textAlign: 'center',
-                              boxShadow: '0 0 10px rgba(0,0,0,0.25)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              cursor: 'pointer',
-                              transition: 'transform 0.2s',
-                              color: textColor,
-                              '& *': { color: textColor },
-                              '&:hover': { transform: 'scale(1.03)' },
+                              mb: 2,
                             }}
                           >
-                            <Box
-                              sx={{
+                            <img
+                              src={latest.youtube.thumbnailUrl}
+                              style={{
                                 width: '100%',
-                                overflow: 'hidden',
-                                borderRadius: 3,
-                                mb: 2,
+                                height: 'auto',
+                                objectFit: 'cover',
+                                display: 'block',
                               }}
-                            >
-                              <img
-                                src={latest.youtube.thumbnailUrl}
-                                style={{
-                                  width: '100%',
-                                  height: 'auto',
-                                  objectFit: 'cover',
-                                  display: 'block',
-                                }}
-                              />
-                            </Box>
-
-                            <Typography fontWeight={700} sx={{ mb: 1 }}>
-                              📺 YouTube Release
-                            </Typography>
-
-                            <Typography variant="body2">
-                              {latest.youtube.title}
-                            </Typography>
+                            />
                           </Box>
-                        </a>
-                      </Grid>
-                    )}
 
-                    {/* SPOTIFY CARD */}
-                    {latest.spotify && (
-                      <Grid
-                        size={{ xs: 12 }}
-                        sx={{ display: 'flex', justifyContent: 'center' }}
+                          <Typography fontWeight={700} sx={{ mb: 1 }}>
+                            📺 YouTube Release
+                          </Typography>
+
+                          <Typography variant="body2">
+                            {latest.youtube.title}
+                          </Typography>
+                        </Box>
+                      </a>
+                    </Grid>
+                  )}
+
+                  {/* SPOTIFY CARD */}
+                  {latest.spotify && (
+                    <Grid
+                      size={{ xs: 12 }}
+                      sx={{ display: 'flex', justifyContent: 'center' }}
+                    >
+                      <a
+                        href={latest.spotify.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          textDecoration: 'none',
+                          width: '100%',
+                          maxWidth: 420,
+                        }}
                       >
-                        <a
-                          href={latest.spotify.spotifyUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            textDecoration: 'none',
+                        <Box
+                          sx={{
                             width: '100%',
-                            maxWidth: 420,
+                            background: '#ffffff18',
+                            borderRadius: 3,
+                            p: 2,
+                            textAlign: 'center',
+                            boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            color: textColor,
+                            '& *': { color: textColor },
+                            '&:hover': { transform: 'scale(1.03)' },
                           }}
                         >
                           <Box
                             sx={{
                               width: '100%',
-                              background: '#ffffff18',
+                              overflow: 'hidden',
                               borderRadius: 3,
-                              p: 2,
-                              textAlign: 'center',
-                              boxShadow: '0 0 10px rgba(0,0,0,0.25)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              cursor: 'pointer',
-                              transition: 'transform 0.2s',
-                              color: textColor,
-                              '& *': { color: textColor },
-                              '&:hover': { transform: 'scale(1.03)' },
+                              mb: 2,
                             }}
                           >
-                            <Box
-                              sx={{
+                            <img
+                              src={latest.spotify.imageUrl ?? ''}
+                              style={{
                                 width: '100%',
-                                overflow: 'hidden',
-                                borderRadius: 3,
-                                mb: 2,
+                                height: 'auto',
+                                objectFit: 'cover',
+                                display: 'block',
                               }}
-                            >
-                              <img
-                                src={latest.spotify.imageUrl ?? ''}
-                                style={{
-                                  width: '100%',
-                                  height: 'auto',
-                                  objectFit: 'cover',
-                                  display: 'block',
-                                }}
-                              />
-                            </Box>
-
-                            <Typography fontWeight={700} sx={{ mb: 1 }}>
-                              🎵 Spotify Release
-                            </Typography>
-
-                            <Typography variant="body2">
-                              {latest.spotify.name}
-                            </Typography>
+                            />
                           </Box>
-                        </a>
-                      </Grid>
-                    )}
-                  </Grid>
-                </Box>
-              )}
-            </Grid>
+
+                          <Typography fontWeight={700} sx={{ mb: 1 }}>
+                            🎵 Spotify Release
+                          </Typography>
+
+                          <Typography variant="body2">
+                            {latest.spotify.name}
+                          </Typography>
+                        </Box>
+                      </a>
+                    </Grid>
+                  )}
+                </Grid>
+              </Box>
+            )}
           </Grid>
-        </Box>
-      </Fade>
-    </>
+        </Grid>
+      </Container>
+    </Fade>
   );
 }

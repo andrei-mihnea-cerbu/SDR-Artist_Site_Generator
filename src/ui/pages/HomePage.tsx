@@ -154,7 +154,7 @@ export default function HomePage() {
       sx={{
         minHeight: '100dvh',
         position: 'relative',
-        overflow: 'visible',
+        overflowX: 'hidden',
       }}
     >
       {/* ===================================================== */}
@@ -214,8 +214,9 @@ export default function HomePage() {
               mx: 'auto',
               mb: 4,
               p: 2,
-              px: 4,
-              width: 'fit-content',
+              px: 2,
+              width: { xs: '90%', md: 'fit-content' },
+              maxWidth: 600,
               textAlign: 'center',
               borderRadius: 4,
               background: panelColor,
@@ -234,13 +235,14 @@ export default function HomePage() {
           <Grid container spacing={4}>
             {/* LEFT COLUMN — SOCIALS */}
             <Grid
-              size={{ xs: 12, md: 4 }}
+              item
+              xs={12}
+              md={4}
               sx={{ display: 'flex', justifyContent: 'center' }}
             >
               <Box
                 sx={{
-                  width: '100%',
-                  maxWidth: 480,
+                  width: '90%', // wider socials
                   bgcolor: panelColor,
                   color: textColor,
                   p: 2,
@@ -281,7 +283,7 @@ export default function HomePage() {
             </Grid>
 
             {/* RIGHT COLUMN — LATEST RELEASES */}
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid item xs={12} md={8}>
               {latest && (
                 <Box
                   sx={{
@@ -313,7 +315,8 @@ export default function HomePage() {
                     {/* YOUTUBE */}
                     {latest.youtube && (
                       <Grid
-                        size={{ xs: 12 }}
+                        item
+                        xs={12}
                         sx={{ display: 'flex', justifyContent: 'center' }}
                       >
                         <Box
@@ -326,6 +329,9 @@ export default function HomePage() {
                             p: 2,
                             textAlign: 'center',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                            minHeight: 620,
+                            display: 'flex',
+                            flexDirection: 'column',
                           }}
                         >
                           {/* 1:1 IMAGE */}
@@ -363,7 +369,8 @@ export default function HomePage() {
                     {/* SPOTIFY */}
                     {latest.spotify && (
                       <Grid
-                        size={{ xs: 12 }}
+                        item
+                        xs={12}
                         sx={{ display: 'flex', justifyContent: 'center' }}
                       >
                         <Box
@@ -376,6 +383,9 @@ export default function HomePage() {
                             p: 2,
                             textAlign: 'center',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
+                            minHeight: 620,
+                            display: 'flex',
+                            flexDirection: 'column',
                           }}
                         >
                           {/* 1:1 IMAGE */}

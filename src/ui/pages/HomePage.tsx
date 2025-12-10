@@ -137,7 +137,7 @@ export default function HomePage() {
     return (
       <Box
         sx={{
-          height: '100vh',
+          height: '100dvh',
           bgcolor: '#000',
           color: '#fff',
           display: 'flex',
@@ -152,9 +152,9 @@ export default function HomePage() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         position: 'relative',
-        overflow: 'visible', // IMPORTANT FIX
+        overflow: 'visible',
       }}
     >
       {/* ===================================================== */}
@@ -234,7 +234,9 @@ export default function HomePage() {
           <Grid container spacing={4}>
             {/* LEFT COLUMN — SOCIALS */}
             <Grid
-              size={{ xs: 12, md: 4 }}
+              item
+              xs={12}
+              md={4}
               sx={{ display: 'flex', justifyContent: 'center' }}
             >
               <Box
@@ -280,10 +282,8 @@ export default function HomePage() {
               </Box>
             </Grid>
 
-            {/* ===================================================== */}
             {/* RIGHT COLUMN — LATEST RELEASES */}
-            {/* ===================================================== */}
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid item xs={12} md={8}>
               {latest && (
                 <Box
                   sx={{
@@ -314,26 +314,40 @@ export default function HomePage() {
                   <Grid container spacing={3}>
                     {/* YOUTUBE */}
                     {latest.youtube && (
-                      <Grid size={{ xs: 12 }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sx={{ display: 'flex', justifyContent: 'center' }}
+                      >
                         <Box
                           sx={{
+                            width: '100%',
+                            maxWidth: 420,
+                            mx: 'auto',
                             background: '#ffffff18',
                             borderRadius: 3,
                             p: 2,
                             textAlign: 'center',
-                            maxWidth: 420,
-                            mx: 'auto',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box sx={{ aspectRatio: '1/1', mb: 2 }}>
+                          {/* 1:1 IMAGE */}
+                          <Box
+                            sx={{
+                              width: '100%',
+                              aspectRatio: '1 / 1',
+                              overflow: 'hidden',
+                              borderRadius: 3,
+                              mb: 2,
+                            }}
+                          >
                             <img
                               src={latest.youtube.thumbnailUrl}
                               style={{
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                borderRadius: 3,
+                                display: 'block',
                               }}
                             />
                           </Box>
@@ -351,26 +365,40 @@ export default function HomePage() {
 
                     {/* SPOTIFY */}
                     {latest.spotify && (
-                      <Grid size={{ xs: 12 }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sx={{ display: 'flex', justifyContent: 'center' }}
+                      >
                         <Box
                           sx={{
+                            width: '100%',
+                            maxWidth: 420,
+                            mx: 'auto',
                             background: '#ffffff18',
                             borderRadius: 3,
                             p: 2,
                             textAlign: 'center',
-                            maxWidth: 420,
-                            mx: 'auto',
                             boxShadow: '0 0 10px rgba(0,0,0,0.25)',
                           }}
                         >
-                          <Box sx={{ aspectRatio: '1/1', mb: 2 }}>
+                          {/* 1:1 IMAGE */}
+                          <Box
+                            sx={{
+                              width: '100%',
+                              aspectRatio: '1 / 1',
+                              overflow: 'hidden',
+                              borderRadius: 3,
+                              mb: 2,
+                            }}
+                          >
                             <img
                               src={latest.spotify.imageUrl}
                               style={{
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                borderRadius: 3,
+                                display: 'block',
                               }}
                             />
                           </Box>

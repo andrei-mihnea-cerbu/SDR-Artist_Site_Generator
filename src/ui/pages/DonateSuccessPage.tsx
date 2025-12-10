@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Button } from '@mui/material';
+import { Box, Typography, CircularProgress, Button, Fade } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
 
 const DonateSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -20,12 +19,11 @@ const DonateSuccessPage: React.FC = () => {
 
     const captureDonation = async () => {
       try {
-        // Load donation message from local storage
         const message = localStorage.getItem('sdr-donation-text') || '';
 
         const res = await axios.post('/api/paypal/donate/capture', {
           orderId: token,
-          message, // include message in body
+          message,
         });
 
         setDetails(res.data);
@@ -39,21 +37,23 @@ const DonateSuccessPage: React.FC = () => {
     captureDonation();
   }, [searchParams]);
 
-  const imageUrl = '/resources/image-banner.jpg';
-
   return (
-    <AnimatedGradientBackground imageUrl={imageUrl}>
+    <Fade in timeout={700}>
       <Box
         sx={{
+          position: 'relative',
+          zIndex: 2, // Always above MainLayout background
           maxWidth: 500,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          color: 'white',
+          margin: '120px auto',
           padding: 4,
           borderRadius: 4,
           textAlign: 'center',
-          boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          color: 'white',
+          boxShadow: '0 0 20px rgba(0,0,0,0.6)',
         }}
       >
+        {/* LOADING */}
         {status === 'loading' && (
           <>
             <Typography variant="h5" gutterBottom>
@@ -63,23 +63,35 @@ const DonateSuccessPage: React.FC = () => {
           </>
         )}
 
+        {/* SUCCESS */}
         {status === 'success' && (
           <>
             <Typography variant="h4" gutterBottom>
-              🎉 Thank you for your support!
+              Thank you for your support!
             </Typography>
+
             {details?.payer?.name?.given_name && (
               <Typography variant="h6" gutterBottom>
                 Hi {details.payer.name.given_name}, your donation was
                 successful.
               </Typography>
             )}
+
             <Typography variant="body1" gutterBottom>
               Payment ID: <strong>{details?.id}</strong>
             </Typography>
+
             <Button
               variant="outlined"
-              sx={{ mt: 3, color: 'white', borderColor: 'white' }}
+              sx={{
+                mt: 3,
+                color: 'white',
+                borderColor: 'white',
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+                '&:hover': { borderColor: '#ccc' },
+              }}
               onClick={() => (window.location.href = '/')}
             >
               Return to Home
@@ -87,18 +99,28 @@ const DonateSuccessPage: React.FC = () => {
           </>
         )}
 
+        {/* ERROR */}
         {status === 'error' && (
           <>
             <Typography variant="h5" gutterBottom color="error">
-              ❌ We couldn’t complete your donation.
+              We couldn’t complete your donation.
             </Typography>
+
             <Typography variant="body1" gutterBottom>
               Something went wrong while verifying your payment. Please try
               again.
             </Typography>
+
             <Button
               variant="outlined"
-              sx={{ mt: 3, color: 'white', borderColor: 'white' }}
+              sx={{
+                mt: 3,
+                color: 'white',
+                borderColor: 'white',
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+              }}
               onClick={() => (window.location.href = '/donation')}
             >
               Back to Donation Page
@@ -106,7 +128,7 @@ const DonateSuccessPage: React.FC = () => {
           </>
         )}
       </Box>
-    </AnimatedGradientBackground>
+    </Fade>
   );
 };
 

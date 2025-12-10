@@ -1,26 +1,27 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import AnimatedGradientBackground from '../components/AnimatedGradientBackground';
+import { Box, Typography, Button, Fade } from '@mui/material';
 
 const DonateCancelPage: React.FC = () => {
-  const imageUrl = '/resources/image-banner.jpg'; // You can replace this with any fallback or dynamic image
-
   return (
-    <AnimatedGradientBackground imageUrl={imageUrl}>
+    <Fade in timeout={800}>
       <Box
         sx={{
+          position: 'relative',
+          zIndex: 2, // ensure card is above MainLayout background
           maxWidth: 500,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          color: 'white',
+          margin: '120px auto',
           padding: 4,
           borderRadius: 4,
           textAlign: 'center',
-          boxShadow: '0 0 20px rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          color: 'white',
+          boxShadow: '0 0 20px rgba(0,0,0,0.6)',
         }}
       >
         <Typography variant="h4" gutterBottom>
-          ⚠️ Donation Cancelled
+          Donation Cancelled
         </Typography>
+
         <Typography variant="body1" gutterBottom>
           Your donation was not completed. If this was a mistake, you can try
           again below.
@@ -35,13 +36,15 @@ const DonateCancelPage: React.FC = () => {
               '&:hover': { backgroundColor: '#005c99' },
               color: 'white',
               fontWeight: 600,
+              px: 3,
+              py: 1.2,
             }}
           >
             Retry Donation
           </Button>
         </Box>
       </Box>
-    </AnimatedGradientBackground>
+    </Fade>
   );
 };
 

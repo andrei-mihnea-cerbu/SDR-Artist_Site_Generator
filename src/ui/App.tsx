@@ -10,7 +10,6 @@ import MainLayout from './layouts/MainLayout.tsx';
 
 import NotFoundPage from './pages/NotFoundPage.tsx';
 import HomePage from './pages/HomePage.tsx';
-import RefPage from './pages/RefPage.tsx';
 import DonatePage from './pages/DonatePage.tsx';
 import DonateSuccessPage from './pages/DonateSuccessPage.tsx';
 import DonateCancelPage from './pages/DonateCancelPage.tsx';
@@ -28,7 +27,6 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<MainWrapper />}>
           <Route index element={<HomePage />}></Route>
-          <Route path={'/ref/:name'} element={<RefPage />} />
           <Route path={'donation'}>
             <Route index element={<DonatePage />} />
             <Route path={'success'} element={<DonateSuccessPage />} />

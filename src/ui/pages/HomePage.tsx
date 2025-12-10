@@ -227,7 +227,6 @@ export default function HomePage() {
                   color: textColor,
                   borderRadius: 4,
                   p: 3,
-                  boxShadow: '0 0 20px rgba(0,0,0,0.35)',
                 }}
               >
                 <Typography
@@ -262,6 +261,7 @@ export default function HomePage() {
                           textDecoration: 'none',
                           width: '100%',
                           maxWidth: 420,
+                          background: panelColor
                         }}
                       >
                         <Box
@@ -326,6 +326,7 @@ export default function HomePage() {
                           textDecoration: 'none',
                           width: '100%',
                           maxWidth: 420,
+                          background: panelColor
                         }}
                       >
                         <Box

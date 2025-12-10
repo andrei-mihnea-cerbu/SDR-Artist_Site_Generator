@@ -223,10 +223,11 @@ export default function HomePage() {
             {latest && (
               <Box
                 sx={{
-                  background: 'transparent',
+                  background: panelColor,
                   color: textColor,
                   borderRadius: 4,
                   p: 3,
+                  boxShadow: '0 0 20px rgba(0,0,0,0.35)',
                 }}
               >
                 <Typography
@@ -237,7 +238,7 @@ export default function HomePage() {
                     mb: 3,
                     p: 1,
                     borderRadius: 2,
-                    background: panelColor,
+                    background: buttonColor,
                     color: buttonTextColor,
                     width: 'fit-content',
                     mx: 'auto',
@@ -261,7 +262,6 @@ export default function HomePage() {
                           textDecoration: 'none',
                           width: '100%',
                           maxWidth: 420,
-                          background: panelColor
                         }}
                       >
                         <Box
@@ -326,7 +326,6 @@ export default function HomePage() {
                           textDecoration: 'none',
                           width: '100%',
                           maxWidth: 420,
-                          background: panelColor
                         }}
                       >
                         <Box

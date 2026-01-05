@@ -13,7 +13,7 @@ interface ArtistRow {
   id: string;
   name: string;
   type: string;
-  website: string;
+  website: string | null;
   webmail_url: string;
   webmail_email: string;
   webmail_password: string;
@@ -38,8 +38,13 @@ interface SocialRow {
 
 interface LatestReleasesRow {
   artistId: string;
-  youtube: string;
-  spotify: string;
+  youtube: string | null;
+  spotify: string | null;
+}
+
+interface LatestReleasesApiDto {
+  youtube?: object;
+  spotify?: object;
 }
 
 export class LocalDatabase {
@@ -176,12 +181,8 @@ export class LocalDatabase {
       const artistsRes = await this.http.get<Artist[]>('/artists');
       const artists = artistsRes.status === 200 ? artistsRes.body : [];
 
-      if (!artists.length) {
-        console.warn('[LocalDB] No artists returned by API');
-        return;
-      }
+      if (!artists.length) return;
 
-      // CLEAR ALL TABLES
       this.db.prepare('DELETE FROM artists').run();
       this.db.prepare('DELETE FROM descriptions').run();
       this.db.prepare('DELETE FROM socials').run();
@@ -195,19 +196,23 @@ export class LocalDatabase {
           this.http.get<Description>(`/descriptions?artistId=${artist.id}`),
           this.http.get<Social[]>(`/socials?artistId=${artist.id}`),
           this.http.get<Shop>(`/shops?artistId=${artist.id}`),
-          this.http.get(`/music-platforms?latest=true&artistId=${artist.id}`),
+          this.http.get<LatestReleasesApiDto>(
+            `/music-platforms?latest=true&artistId=${artist.id}`
+          ),
         ]);
 
-        const desc = descRes.status === 200 ? descRes.body : null;
-        const socials = socialsRes.body || [];
-        const shop = shopRes.status === 200 ? shopRes.body : null;
-        const latest = latestRes.status === 200 ? latestRes.body : null;
-
         const tx = this.db.transaction(() => {
-          if (desc) this.upsertDescription(desc);
-          for (const s of socials) this.upsertSocial(s, artist.id);
-          if (shop) this.upsertShop(shop);
-          if (latest) this.upsertLatestReleases(artist.id, latest);
+          if (descRes.status === 200 && descRes.body)
+            this.upsertDescription(descRes.body);
+
+          for (const s of socialsRes.body || [])
+            this.upsertSocial(s, artist.id);
+
+          if (shopRes.status === 200 && shopRes.body)
+            this.upsertShop(shopRes.body);
+
+          if (latestRes.status === 200 && latestRes.body)
+            this.upsertLatestReleases(artist.id, latestRes.body);
         });
 
         tx();
@@ -236,8 +241,16 @@ export class LocalDatabase {
     this.db
       .prepare(
         `
-      INSERT INTO artists (id, name, type, website, webmail_url, webmail_email, webmail_password, logos, favicons)
-      VALUES (@id, @name, @type, @website, @webmail_url, @webmail_email, @webmail_password, @logos, @favicons)
+      INSERT INTO artists (
+        id, name, type, website,
+        webmail_url, webmail_email, webmail_password,
+        logos, favicons
+      )
+      VALUES (
+        @id, @name, @type, @website,
+        @webmail_url, @webmail_email, @webmail_password,
+        @logos, @favicons
+      )
       ON CONFLICT(id) DO UPDATE SET
         name=excluded.name,
         type=excluded.type,
@@ -251,6 +264,7 @@ export class LocalDatabase {
       )
       .run({
         ...artist,
+        website: artist.website ?? null,
         webmail_url: artist.webmail?.url || '',
         webmail_email: artist.webmail?.email || '',
         webmail_password: artist.webmail?.password || '',
@@ -307,44 +321,49 @@ export class LocalDatabase {
         url=excluded.url
     `
       )
-      .run({
-        ...social,
-        artistId,
-      });
+      .run({ ...social, artistId });
   }
 
-  private upsertLatestReleases(artistId: string, latest: any) {
+  private upsertLatestReleases(artistId: string, latest: LatestReleasesApiDto) {
     this.db
       .prepare(
         `
       INSERT INTO latest_releases (artistId, youtube, spotify)
       VALUES (@artistId, @youtube, @spotify)
       ON CONFLICT(artistId) DO UPDATE SET
-        youtube = excluded.youtube,
-        spotify = excluded.spotify
+        youtube=excluded.youtube,
+        spotify=excluded.spotify
     `
       )
       .run({
         artistId,
-        youtube: JSON.stringify(latest.youtube),
-        spotify: JSON.stringify(latest.spotify),
+        youtube:
+          latest.youtube !== undefined ? JSON.stringify(latest.youtube) : null,
+        spotify:
+          latest.spotify !== undefined ? JSON.stringify(latest.spotify) : null,
       });
   }
 
   // --- QUERY HELPERS ---
   public getArtistByWebsite(host: string): Artist | null {
     const clean = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
     const row = this.db
-      .prepare(`SELECT * FROM artists WHERE website LIKE ?`)
-      .get(`%${clean}%`) as ArtistRow;
+      .prepare(
+        `
+      SELECT * FROM artists
+      WHERE website IS NOT NULL
+      AND website LIKE ?
+    `
+      )
+      .get(`%${clean}%`) as ArtistRow | undefined;
 
     if (!row) return null;
 
-    return {
+    const artist: Artist = {
       id: row.id,
       name: row.name,
       type: row.type as any,
-      website: row.website,
       webmail: {
         url: row.webmail_url,
         email: row.webmail_email,
@@ -353,12 +372,16 @@ export class LocalDatabase {
       logos: JSON.parse(row.logos || '[]'),
       favicons: JSON.parse(row.favicons || '[]'),
     };
+
+    if (row.website) artist.website = row.website;
+
+    return artist;
   }
 
   public getDescription(artistId: string): Description | null {
     const row = this.db
       .prepare(`SELECT * FROM descriptions WHERE artistId = ?`)
-      .get(artistId) as DescriptionRow;
+      .get(artistId) as DescriptionRow | undefined;
 
     if (!row) return null;
 
@@ -386,31 +409,36 @@ export class LocalDatabase {
   public getLatestReleases(artistId: string) {
     const row = this.db
       .prepare(`SELECT * FROM latest_releases WHERE artistId = ?`)
-      .get(artistId) as LatestReleasesRow;
+      .get(artistId) as LatestReleasesRow | undefined;
 
     if (!row) return null;
 
     return {
-      youtube: JSON.parse(row.youtube || 'null'),
-      spotify: JSON.parse(row.spotify || 'null'),
+      youtube: row.youtube ? JSON.parse(row.youtube) : null,
+      spotify: row.spotify ? JSON.parse(row.spotify) : null,
     };
   }
 
   public getAllArtists(): Artist[] {
     const rows = this.db.prepare(`SELECT * FROM artists`).all() as ArtistRow[];
 
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      type: row.type as any,
-      website: row.website,
-      webmail: {
-        url: row.webmail_url,
-        email: row.webmail_email,
-        password: row.webmail_password,
-      },
-      logos: JSON.parse(row.logos || '[]'),
-      favicons: JSON.parse(row.favicons || '[]'),
-    }));
+    return rows.map((row) => {
+      const artist: Artist = {
+        id: row.id,
+        name: row.name,
+        type: row.type as any,
+        webmail: {
+          url: row.webmail_url,
+          email: row.webmail_email,
+          password: row.webmail_password,
+        },
+        logos: JSON.parse(row.logos || '[]'),
+        favicons: JSON.parse(row.favicons || '[]'),
+      };
+
+      if (row.website) artist.website = row.website;
+
+      return artist;
+    });
   }
 }

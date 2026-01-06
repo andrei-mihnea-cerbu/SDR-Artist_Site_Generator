@@ -197,7 +197,7 @@ export class LocalDatabase {
           this.http.get<Social[]>(`/socials?artistId=${artist.id}`),
           this.http.get<Shop>(`/shops?artistId=${artist.id}`),
           this.http.get<LatestReleasesApiDto>(
-            `/music-platforms?latest=true&artistId=${artist.id}`
+            `/music-platforms/releases?artistId=${artist.id}`
           ),
         ]);
 

@@ -32,8 +32,8 @@ const App: React.FC = () => {
             <Route path={'success'} element={<DonateSuccessPage />} />
             <Route path={'cancel'} element={<DonateCancelPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

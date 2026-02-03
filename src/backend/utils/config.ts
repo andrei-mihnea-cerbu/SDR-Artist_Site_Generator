@@ -23,11 +23,6 @@ export class Config {
       INDEX_HTML_PATH: z.string(),
       MAINTENANCE_HTML_PATH: z.string(),
 
-      PAYPAL_CLIENT_ID: z.string(),
-      PAYPAL_SECRET: z.string(),
-      PAYPAL_RETURN_URL: z.string(),
-      PAYPAL_CANCEL_URL: z.string(),
-
       DATABASE_PATH: z.string(),
       DATABASE_SYNC_INTERVAL_MS: z.string().default('300000'),
 

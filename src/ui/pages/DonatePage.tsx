@@ -88,12 +88,13 @@ export default function DonatePage() {
         currency,
       });
 
-      const approvalLink = res.data.links?.find(
-        (l: any) => l.rel === 'approve'
-      )?.href;
+      const approvalUrl = res.data.approvalUrl;
 
-      if (approvalLink) window.location.href = approvalLink;
-      else throw new Error('Missing PayPal approval link');
+      if (approvalUrl) {
+        window.location.href = approvalUrl;
+      } else {
+        throw new Error('Missing PayPal approval URL');
+      }
     } catch (err) {
       console.error(err);
       setNotification(

@@ -125,17 +125,17 @@ export class LocalDatabase {
         this.db.transaction(() => {
           (soc.body || []).forEach((s) => this.upsertSocial(s, artist.id));
 
-          // Tratăm shop-ul ca o singură entitate
           if (shp.body) {
             const shopData = Array.isArray(shp.body) ? shp.body[0] : shp.body;
-            if (shopData) this.upsertShop(shopData);
+            if (shopData) this.upsertShop(shopData, artist.id);
           }
 
           if (rel.body) this.upsertLatestReleases(artist.id, rel.body);
         })();
       }
+      console.log(`[LocalDB] Sync completed for ${artists.length} artists.`);
     } catch (err: any) {
-      console.warn('[LocalDB] Sync failed:', err.message);
+      console.error('[LocalDB] Sync failed:', err.message);
     }
   }
 
@@ -150,8 +150,6 @@ export class LocalDatabase {
     setTimeout(run, this.syncIntervalMs);
   }
 
-  // --- UPSERTS ---
-
   private upsertArtist(a: ArtistApiDto) {
     this.db
       .prepare(
@@ -161,18 +159,21 @@ export class LocalDatabase {
     `
       )
       .run({
-        ...a,
+        id: a.id,
+        name: a.name,
+        type: a.type,
         website: a.website ?? null,
         bio: a.bio ?? null,
-        archivePath: a.archivePath ?? null,
         isActive: a.isActive ? 1 : 0,
+        archivePath: a.archivePath ?? null,
+        productionPrice: a.productionPrice ?? 0,
         hasAvatar: a.avatarDataUri ? 1 : 0,
         hasLogo: a.logoDataUri ? 1 : 0,
         hasFavicon: a.faviconDataUri ? 1 : 0,
       });
   }
 
-  private upsertShop(s: ShopApiDto) {
+  private upsertShop(s: ShopApiDto, artistId: string) {
     this.db
       .prepare(
         `
@@ -181,9 +182,11 @@ export class LocalDatabase {
     `
       )
       .run({
-        ...s,
-        hasImage: s.imageDataUri ? 1 : 0,
+        id: s.id,
+        artistId: artistId,
+        name: s.name,
         website: s.website ?? null,
+        hasImage: s.imageDataUri ? 1 : 0,
         shopFeed: s.shopFeed ?? null,
       });
   }
@@ -197,9 +200,11 @@ export class LocalDatabase {
     `
       )
       .run({
-        ...s,
-        artistId,
+        id: s.id,
+        artistId: artistId,
+        name: s.name,
         description: s.description ?? null,
+        url: s.url,
       });
   }
 
@@ -218,8 +223,6 @@ export class LocalDatabase {
       );
   }
 
-  // --- GETTERS ---
-
   public getAllArtists(): ArtistEntity[] {
     const rows = this.db.prepare(`SELECT * FROM artists`).all() as ArtistRow[];
     return rows.map((r) => ({
@@ -235,14 +238,14 @@ export class LocalDatabase {
     }));
   }
 
-  public getArtistByWebsite(host: string): ArtistEntity | null {
+  public getArtistByWebsite(host: string): ArtistEntity | undefined {
     const clean = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
     const row = this.db
       .prepare(`SELECT * FROM artists WHERE website LIKE ?`)
       .get(`%${clean}%`) as ArtistRow | undefined;
 
-    if (!row) return null;
-    return this.getAllArtists().find((a) => a.id === row.id) || null;
+    if (!row) return undefined;
+    return this.getAllArtists().find((a) => a.id === row.id);
   }
 
   public getShopByArtist(artistId: string): ShopEntity | undefined {

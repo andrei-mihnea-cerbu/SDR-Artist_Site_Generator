@@ -2,6 +2,7 @@ export interface SocialRow {
   id: string;
   name: string;
   description: string;
+  artistId: string;
   url: string;
 }
 

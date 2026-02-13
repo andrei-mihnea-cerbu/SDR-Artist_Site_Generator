@@ -82,7 +82,7 @@ export class LocalDatabase {
       .prepare(
         `
       CREATE TABLE IF NOT EXISTS socials (
-        id TEXT PRIMARY KEY, name TEXT, description TEXT, url TEXT
+        id TEXT PRIMARY KEY, artistId TEXT, name TEXT, description TEXT, url TEXT
       )
     `
       )
@@ -123,7 +123,7 @@ export class LocalDatabase {
         ]);
 
         this.db.transaction(() => {
-          (soc.body || []).forEach((s) => this.upsertSocial(s));
+          (soc.body || []).forEach((s) => this.upsertSocial(s, artist.id));
 
           // Tratăm shop-ul ca o singură entitate
           if (shp.body) {
@@ -188,7 +188,7 @@ export class LocalDatabase {
       });
   }
 
-  private upsertSocial(s: SocialApiDto) {
+  private upsertSocial(s: SocialApiDto, artistId: string) {
     this.db
       .prepare(
         `
@@ -198,6 +198,7 @@ export class LocalDatabase {
       )
       .run({
         ...s,
+        artistId,
         description: s.description ?? null,
       });
   }

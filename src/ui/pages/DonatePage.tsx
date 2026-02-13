@@ -14,16 +14,10 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-import { Artist } from '../interfaces/artist';
-import { Description } from '../interfaces/description';
 import { useNotification } from '../context/NotificationProvider';
 
 import { ColorEngineInstance } from '../utils/color_engine';
-
-interface InfoResponse {
-  artist: Artist;
-  description: Description;
-}
+import { InfoResponse } from '../interfaces/info';
 
 export default function DonatePage() {
   const [info, setInfo] = useState<InfoResponse | null>(null);
@@ -44,7 +38,7 @@ export default function DonatePage() {
   const [fadeIn, setFadeIn] = useState(false);
 
   const { setNotification } = useNotification();
-  const bucketUrl = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // ----------------------------------------------------
   // Load artist + theme
@@ -56,8 +50,9 @@ export default function DonatePage() {
       const res = await axios.get<InfoResponse>('/info');
       setInfo(res.data);
 
-      const path = encodeURI(res.data.description.imageGallery[0]);
-      const url = `${bucketUrl}/${path}`;
+      const url = encodeURI(
+        `${API_URL}/artists/${res.data.artist.id}/photo?type=avatar`
+      );
 
       const palette = await ColorEngineInstance.extractPalette(url);
 
@@ -191,7 +186,7 @@ export default function DonatePage() {
         <Fade in={fadeIn} timeout={1200}>
           <Box
             component="img"
-            src={`${bucketUrl}/${encodeURI(info.description.imageGallery[0])}`}
+            src={`${API_URL}/artists/${info.artist.id}/photo?type=avatar`}
             alt="artist"
             sx={{
               width: 120,

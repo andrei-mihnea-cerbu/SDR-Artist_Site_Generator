@@ -9,16 +9,15 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [fadeIn, setFadeIn] = useState(false);
 
-  const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const load = async () => {
       try {
         const { data } = await axios.get<InfoResponse>('/info');
 
-        if (data.description?.imageGallery?.length > 0) {
-          const rel = encodeURI(data.description.imageGallery[0]);
-          const full = `${bucket}/${rel}`;
+        if (data.artist.hasAvatar) {
+          const full = `${API_URL}/artists/${data.artist.id}/photo?type=avatar`;
           setPhotoUrl(full);
 
           await ColorEngineInstance.extractPalette(full);

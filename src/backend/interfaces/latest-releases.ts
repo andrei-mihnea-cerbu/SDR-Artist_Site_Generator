@@ -12,7 +12,18 @@ export interface LatestSpotifyRelease {
   imageUrl: string | null;
 }
 
-export interface LatestReleases {
+export interface LatestReleasesApiDto {
+  youtube?: LatestYouTubeRelease | null;
+  spotify?: LatestSpotifyRelease | null;
+}
+
+export interface LatestReleasesEntity {
   youtube: LatestYouTubeRelease | null;
   spotify: LatestSpotifyRelease | null;
+}
+
+export interface LatestReleasesRow {
+  artistId: string;
+  youtube: string | null;
+  spotify: string | null;
 }

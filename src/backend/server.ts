@@ -22,9 +22,7 @@ app.use(express.json());
 // 📁 Paths and constants
 const INDEX_HTML_PATH = config.get('INDEX_HTML_PATH');
 const MAINTENANCE_HTML_PATH = config.get('MAINTENANCE_HTML_PATH');
-
-// 🪣 S3 Bucket Base URL
-const S3_BASE_URL = config.get('S3_PUBLIC_BASE_URL');
+const API_URL = config.get('API_URL');
 
 // 🔒 CORS setup
 function wildcardToRegex(domain: string): RegExp[] {
@@ -128,12 +126,6 @@ app.get('/info', async (req: Request, res: Response) => {
       return;
     }
 
-    const description = db.getDescription(artist.id);
-    if (!description) {
-      res.status(404).json({ error: 'Artist description not found' });
-      return;
-    }
-
     const socials = db.getSocials(artist.id);
     if (!socials || socials.length === 0) {
       res.status(404).json({ error: 'Artist socials not found' });
@@ -146,7 +138,7 @@ app.get('/info', async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({ artist, description, socials, latestReleases });
+    res.status(200).json({ artist, socials, latestReleases });
   } catch (error) {
     console.error('❌ Failed to get artist info:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -200,10 +192,11 @@ app.get(/.*/, async (req: Request, res: Response) => {
     return;
   }
 
-  const artistDescription = db.getDescription(artist.id);
-  if (!artistDescription) {
-    console.warn(`❌ No description found for artist: ${artist.name}`);
-    res.sendStatus(404);
+  if (artist.isActive === false) {
+    console.warn(
+      `⚠️ Artist ${artist.name} is marked as inactive. Serving maintenance page.`
+    );
+    res.sendStatus(503);
     return;
   }
 
@@ -220,42 +213,25 @@ app.get(/.*/, async (req: Request, res: Response) => {
     defaultPageTitle: 'Welcome',
     indexHtmlPath: INDEX_HTML_PATH,
     maintenanceHtmlPath: MAINTENANCE_HTML_PATH,
-    faviconUrl:
-      artist.favicons.length > 0
-        ? `${S3_BASE_URL}/${artist.favicons[0]}`
-        : `/static/favicon.ico`,
+    faviconUrl: artist.hasFavicon
+      ? `${API_URL}/artists/${artist.id}/photo?type=favicon`
+      : `/static/favicon.ico`,
     isServerDown: config.get('SERVER_MAINTENANCE_MODE') === 'true',
   });
 
   const url = `https://${req.get('host')}${req.originalUrl}`;
 
-  // 🧠 Use S3 bucket for artist images (with fallback to local)
-  const encodedPath = encodeURI(artistDescription.imageGallery[0]);
-  const imageUrl = `${S3_BASE_URL}/${encodedPath}`;
+  const imageUrl = encodeURI(
+    `${API_URL}/artists/${artist.id}/photo?type=avatar`
+  );
 
   let description = `Welcome to ${artist.name}'s official website`;
   let customTitleSegment = '';
 
-  const refMatch = req.path.match(/^\/ref\/([^/]+)\/?$/);
-
-  if (req.path === '/donate') {
+  if (req.path === '/donation') {
     const formattedTitle = seo.formatTitle('donate');
     description = `Support ${artist.name} by donating with PayPal. Your contribution helps us create more amazing content.`;
     customTitleSegment = `${formattedTitle} to ${artist.name}`;
-  } else if (refMatch) {
-    const fullPath = `https://${host}${req.path}`;
-    const matchedSocial = artistSocials.find(
-      (social) => social.url.toLowerCase() === fullPath.toLowerCase()
-    );
-
-    if (matchedSocial) {
-      const formattedTitle = seo.formatTitle(matchedSocial.name);
-      description = `Check out ${artist.name}'s ${matchedSocial.name} profile.`;
-      customTitleSegment = formattedTitle;
-    } else {
-      description = `${artist.name} doesn't seem to have a profile by that name.`;
-      customTitleSegment = 'Unknown Reference';
-    }
   } else if (req.path !== '/') {
     const formattedTitle = seo.formatTitle(req.path.split('/')[1] || '');
     description = `Explore '${formattedTitle}' page on ${artist.name}.`;

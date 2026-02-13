@@ -93,8 +93,9 @@ export default function HomePage() {
   const [buttonColor, setButtonColor] = useState('#333');
   const [buttonTextColor, setButtonTextColor] = useState('#fff');
 
-  const bucket = import.meta.env.VITE_S3_PUBLIC_BASE_URL;
   const [fadeIn, setFadeIn] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // =====================================================
   // LOAD INFO
@@ -110,9 +111,8 @@ export default function HomePage() {
         );
         setLatest(data.latestReleases);
 
-        if (data.description.imageGallery.length > 0) {
-          const rel = encodeURI(data.description.imageGallery[0]);
-          const full = `${bucket}/${rel}`;
+        if (data.artist.hasAvatar) {
+          const full = `${API_URL}/artists/${data.artist.id}/photo?type=avatar`;
 
           const palette = await ColorEngineInstance.extractPalette(full);
           if (palette) {

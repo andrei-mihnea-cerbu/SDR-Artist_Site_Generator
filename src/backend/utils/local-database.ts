@@ -82,7 +82,7 @@ export class LocalDatabase {
       .prepare(
         `
       CREATE TABLE IF NOT EXISTS socials (
-        id TEXT PRIMARY KEY, artistId TEXT, name TEXT, description TEXT, url TEXT
+        id TEXT PRIMARY KEY, name TEXT, description TEXT, url TEXT
       )
     `
       )
@@ -266,7 +266,6 @@ export class LocalDatabase {
       .all(artistId) as SocialRow[];
     return rows.map((r) => ({
       id: r.id,
-      artistId: r.artistId,
       name: r.name,
       description: r.description ?? undefined,
       url: r.url,

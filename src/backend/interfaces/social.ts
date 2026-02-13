@@ -1,6 +1,5 @@
 export interface SocialRow {
   id: string;
-  artistId: string;
   name: string;
   description: string;
   url: string;
@@ -8,7 +7,6 @@ export interface SocialRow {
 
 export interface SocialEntity {
   id: string;
-  artistId: string;
   name: string;
   description: string;
   url: string;
@@ -16,7 +14,6 @@ export interface SocialEntity {
 
 export interface SocialApiDto {
   id: string;
-  artistId: string;
   name: string;
   description: string;
   url: string;

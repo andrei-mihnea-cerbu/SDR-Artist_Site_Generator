@@ -229,9 +229,9 @@ app.get(/.*/, async (req: Request, res: Response) => {
   let customTitleSegment = '';
 
   if (req.path === '/donation') {
-    const formattedTitle = seo.formatTitle('donate');
-    description = `Support ${artist.name} by donating with PayPal. Your contribution helps us create more amazing content.`;
-    customTitleSegment = `${formattedTitle} to ${artist.name}`;
+    const formattedTitle = 'Support Portal';
+    description = `Support ${artist.name} by using the official ${formattedTitle}.`;
+    customTitleSegment = formattedTitle;
   } else if (req.path !== '/') {
     const formattedTitle = seo.formatTitle(req.path.split('/')[1] || '');
     description = `Explore '${formattedTitle}' page on ${artist.name}.`;
